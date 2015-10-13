@@ -5,7 +5,7 @@
 
 extern uint8_t SmallFont[];
 
-UTFT    myGLCD(ITDB32S, 38, 39, 40, 41);
+UTFT     myGLCD(CTE70, 25, 26, 27, 28);
 UTouch  myTouch( 6, 5, 4, 3, 2);
 
 Base B(&myGLCD, &myTouch); // Base class, NEEDED!!!
@@ -26,28 +26,30 @@ void setup()
   myGLCD.setFont(SmallFont);
   myTouch.InitTouch(LANDSCAPE);
   myTouch.setPrecision(PREC_MEDIUM);
-  myGLCD.fillScr(BLACK);
+  myGLCD.fillScr(BLACK); // these two should be the same
+  myGLCD.setBackColor(BLACK); // ^^^^^^^^^
 
   Button.Coords(10, 10, 60, 60);
-  Button.Colors(0xD7E0, 0x001F, FILL, ROUNDED);
+  Button.Colors(0xD7E0, 0x001F, ROUNDED, FILL);
   Button.Draw();
 
   Button1.Coords(110, 10, 160, 60);
-  Button1.Colors(0xD7E0, 0x001F, NOFILL, ROUNDED);
+  Button1.Colors(0xD7E0, 0x001F, SQUARED, FILL);
   Button1.Draw();
 
   Button2.Coords(210, 10, 260, 60);
-  Button2.Colors(0xD7E0, 0x001F, FILL, SQUARED);
+  Button2.Colors(0xD7E0, 0x001F, SQUARED, NOFILL);
+  Button2.Text("1","2", WHITE, Big);
   Button2.Draw();
 
-  CButton.Coords(80, 120, 50);
+  CButton.Coords(80, 120, AUTO);
   CButton.Colors(RED, PURPLE, FILL);
-  CButton.Text(GREEN, Big, "Hello");
+  CButton.Text("Hello",GREEN, Big);
   CButton.Draw();
 
   CButton1.Coords(220, 120, 50);
   CButton1.Colors(YELLOW, BLUE, NOFILL);
-  CButton1.Text(RED, Big, "Hello", "Seeya");
+  CButton1.Text("Hello", "Seeya", RED, Big);
   CButton1.Draw();
 
   TButton.Coords(50, 210, 40);
@@ -56,20 +58,22 @@ void setup()
 
   TButton1.Coords(150,210,40);
   TButton1.Colors(GREEN, RED, FILL);
+  TButton1.Draw();
   
   TButton2.Coords(250,210,40);
   TButton2.Colors(GREEN, RED, FILL);
+  TButton2.Draw();
 }
 
 void loop()
 {
-   Button.Touch();
-   Button1.Latch();
+   Button.Delay(1000);
+   Button1.Delay(1000);
    Button2.Delay(1000);
    
    CButton.Touch();
    CButton1.Touch();
-   
+   //TButton1.Touch();
    //The triangles are there but there is a glitch I am still working out.
    myTRB.RadioButtons(myTButtons);  
 }

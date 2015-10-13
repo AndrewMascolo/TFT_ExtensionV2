@@ -30,7 +30,7 @@ void setup()
   {
     Button[i % 4][i / 4]->Coords(50 + (i % 4) * 60, 50 + (i / 4) * 60, 100 + (i % 4) * 60, 100 + (i / 4) * 60);
     Button[i % 4][i / 4]->Colors(GREEN, RED, FILL, ROUNDED);
-    Button[i % 4][i / 4]->Text(BLACK, Small, "ON", "OFF");
+    Button[i % 4][i / 4]->Text("ON", "OFF", BLACK, Small);
     Button[i % 4][i / 4]->Draw();
   }
 }
@@ -39,7 +39,7 @@ void loop()
 {
   if (id < 8)
   {
-    Button[id % 4][id / 4]->Latch();
+    Button[id % 4][id / 4]->Toggle();
     id++;
   }
   else id = 0;

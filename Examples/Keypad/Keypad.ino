@@ -5,7 +5,7 @@
 
 extern uint8_t SmallFont[];
 
-UTFT    myGLCD(ITDB32S, 38, 39, 40, 41);
+UTFT    myGLCD(CTE70, 25, 26, 27, 28);
 UTouch  myTouch( 6, 5, 4, 3, 2);
 
 Base B(&myGLCD, &myTouch); // Base class, NEEDED!!!
@@ -32,10 +32,10 @@ void setup()
 
   for (byte i = 0; i < 12; i++)
   {
-    keypadButtons[i]->Coords(70 + (80 * (i % 3)), 30 + (55*(i/3)), 25);
+    keypadButtons[i]->Coords(70 + (80 * (i % 3)), 30 + (55*(i/3)), 26);
     keypadButtons[i]->Colors(GREEN, BLUE, FILL);
     keypadButtons[i]->Padding(2);
-    keypadButtons[i]->Text(WHITE, Big, KPtext[i]);
+    keypadButtons[i]->Text(KPtext[i],WHITE, Big);
     keypadButtons[i]->Draw();
   }
 }

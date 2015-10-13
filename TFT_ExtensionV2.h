@@ -1,16 +1,56 @@
 #ifndef TFT_ExtensionV2_h
 #define TFT_ExtensionV2_h
 
-int FrontColor, BackColor;
-#define Save_MainColor 		do{ FrontColor = _Disp->getColor(); BackColor = _Disp->getBackColor(); }while(0)
-#define Restore_MainColor	do{ _Disp->setColor(FrontColor); _Disp->setBackColor(BackColor); }while(0)
+// Version 2.08
+// Custombuttons can now be used with the Radio class
+// The defines for the triangle set degrees (left, right, up, down) have been changed
+// to Tri_up, Tri_down... etc.
+// Cycle class now has the option to allow rollover (Roll and NoRoll) for the two button function. Default is NoRoll.
 
-#define up 0
-#define down 180
-#define left 90
-#define right 270
+// Version 2.07
+// Added Cycle class
+// took out text option from triangle class
+// Redid the Delay functions for each button type to non-blocking.
+
+// Version 2.06
+// fixed the background text in all the buttons. (only shaves off a few microseconds)
+// Fixed the keyboard to now allow colors and fill.
+// Fixed the triangle class
+// All buttons can now auto size themselves with the argument "AUTO" in place of the X2,Y2 coordinates or Radius.
+// ** AUTO sizes the button based on the text with the most characters **
+// took out sprintf from Meter class (reduced memory usage by 7,242 bytes!)
+
+// Version 2.05
+// Changed the class name from ProgressBar to Meter.
+// Made a "new" class called Progressbar 
+// added new feature that allows all buttons to have header and footer text.
+// added save and restore main color macro to all classes that change the foreground and background colors
+// change the function name "Latch" to "Toggle"
+
+// Version 2.04
+// Added Keyboard class
+
+// Version 2.03
+// Added custom button class and swipe class
+
+// Version 2.02 
+// minor bug fix with all buttons
+
+// Version 2.01
+// introducing the Box, Circle and Triangle classes
+
+int FrontColor, BackColor;
+byte * Font;
+#define Save_MainColor 		do{ FrontColor = _Disp->getColor(); BackColor = _Disp->getBackColor(); Font = _Disp->getFont();}while(0)
+#define Restore_MainColor	do{ _Disp->setColor(FrontColor); _Disp->setBackColor(BackColor); _Disp->setFont(Font);}while(0)
+
+#define Tri_up 0
+#define Tri_down 180
+#define Tri_left 90
+#define Tri_right 270
 #define Deg_to_rad 0.01745 + 3.14159265
 
+#define AUTO -1
 #define HORIZONTAL 0
 #define VERTICAL 1
 
@@ -22,6 +62,8 @@ int FrontColor, BackColor;
 #define SQUARED 0
 #define NoBars 1
 #define Bars 0
+#define NoRoll 0
+#define Roll 1
 
 #ifdef UTFT_h
 #define DISPLAY UTFT
@@ -56,6 +98,7 @@ int FrontColor, BackColor;
 #define CYAN    0x07FF
 #define GREY    0x8410
 #define WHITE   0xFFFF
+#define TRANSPARENT 0xFFFFFFFF
 //==================END_OF_COLOR_PALLET======================
 
 #define FILL 1
@@ -78,6 +121,7 @@ int FrontColor, BackColor;
 
 #include <avr/pgmspace.h>
 #include <Arduino.h>
+
 extern uint8_t SmallFont[];
 extern uint8_t BigFont[];
 
@@ -148,8 +192,12 @@ class Box : public Base
       Padding(2, WHITE);
       lastState = 255;
       Text(" ", BLACK, Small);
-      HeadFootText(" ", " ", BLACK, Small);
+      HeadFootText(0, 0, BLACK, Small);
+	  touch = 0;
+	  lockout = false;
     }
+	
+	~Box(){ }
 
     void Coords(int x1, int y1, int x2, int y2)
     {
@@ -212,6 +260,12 @@ class Box : public Base
     void Draw(bool TE = true)
     {
 	  Save_MainColor;
+	  
+	  if(X2 == AUTO)
+	    X2 = X1 + max(strlen(pText),strlen(npText))*(FontSize? 16 : 8) + 8;//autoPadding;
+	  if(Y2 == AUTO)
+	    Y2 = Y1 + (FontSize? 16 : 12) + 10;//autoPadding;
+		
       if (State != lastState)
       {
         if (_padding > 0) //Padding for the button
@@ -250,58 +304,50 @@ class Box : public Base
 
     void ReDraw()
     {
+	  locked = false;
       lastState = 255;
     }
 
     void drawText(bool TxtEnable, bool Button)
     {
-	  Save_MainColor;
       if (TxtEnable) // If there is text for that button, show it.
       {
-        extern uint8_t SmallFont[];
-        extern uint8_t BigFont[];
-
         byte strl = strlen(pText);
         byte strl_2 = strlen(npText);
         int Xpos = (X2 + X1) / 2; // find the center of the button
         int Ypos = (Y2 + Y1) / 2; // -----------------------------
-
+        
+		if(!Fill)
+          _Disp->setBackColor(_Disp->getBackColor());
+		else 
+		  _Disp->setBackColor(0xFFFFFFFF);
+		  
         if (C1 == C2)
-        {
-          _Disp->setBackColor(C1);
           _Disp->setColor((tColor != C1) ? tColor : ~tColor); // Show the text color
-        }
         else
         {
           if (Button)
-          {
-            _Disp->setBackColor(C1);
             _Disp->setColor((tColor != C1) ? tColor : ~tColor);
-          }
           else
-          {
-            _Disp->setBackColor(C2);
             _Disp->setColor((tColor != C2) ? tColor : ~tColor);
-          }
         }
-
-        if (FontSize) //big font
-        {
-          _Disp->setFont(BigFont);
-          if (Button)
-            _Disp->print( pText, Xpos - (strl * 8), Ypos - 8, 0); //print the string in the center of the button. Big font is 16x16
-          else
-            _Disp->print( npText, Xpos - (strl_2 * 8), Ypos - 8, 0);
-        }
-        else
-        {
-          _Disp->setFont(SmallFont);
-          if (Button)
-            _Disp->print( pText, Xpos - (strl * 4), Ypos - 6, 0); // small font is 8x12
-          else
-            _Disp->print( npText, Xpos - (strl_2 * 4), Ypos - 6, 0);
-        }
-
+        
+		if (FontSize) //big font
+		{
+		  _Disp->setFont(BigFont);
+		  if (Button)
+			_Disp->print( pText, Xpos - (strl * 8), Ypos - 8, 0); //print the string in the center of the button. Big font is 16x16
+		  else
+			_Disp->print( npText, Xpos - (strl_2 * 8), Ypos - 8, 0);
+		}
+		else
+		{
+		  _Disp->setFont(SmallFont);
+		  if (Button)
+			_Disp->print( pText, Xpos - (strl * 4), Ypos - 6, 0); // small font is 8x12
+		  else
+			_Disp->print( npText, Xpos - (strl_2 * 4), Ypos - 6, 0);
+		}
         _Disp->setColor(HFcolor);
         _Disp->setBackColor(0xFFFFFFFF);
         _Disp->setFont(HFFontSize ? BigFont : SmallFont);
@@ -310,7 +356,6 @@ class Box : public Base
         if (strcmp(fText, " "))
           _Disp->print(fText, ((X1 + X2) / 2) - strlen(fText) * (HFFontSize ? 8 : 4), Y2 + 5);
       }
-	  Restore_MainColor;
     }
 
     bool getTouchState()
@@ -349,30 +394,24 @@ class Box : public Base
     }
 
     bool Delay(unsigned long T = 1000)
-    {
-      static unsigned long B_current_time;
-      static bool B_timeout;
-      B_timeout = false;
-
-      if (this->getTouchState() && B_timeout == false)
+    {   
+      touch = this->getTouchState();
+	  
+      if (touch==true && lockout == false)
       {
         B_current_time = millis();
-        B_timeout = true;
+        lockout = true;
       }
-      else State = false;
-
-      while (this->getTouchState() && B_timeout)
-      {
-        if ((millis() - B_current_time) >= T)
-        {
-          State = true;
-          break;
-        }
-        else State = false;
-      }
+      
+      if (touch && lockout)
+        State = ((millis() - B_current_time) >= T);
+	  else 
+	  {
+	    State = false; 
+	    lockout = false;
+	  }
+      
       this->Draw();
-      B_timeout = false;
-      B_current_time = 0;
 
       return State;
     }
@@ -394,7 +433,10 @@ class Box : public Base
     bool Round, Fill;
     bool Lock;
     bool locked;
+	//byte autoPadding;
     char *pText, *npText, *hText, *fText;
+	unsigned long B_current_time;
+    bool lockout, touch;
 };
 
 class Circle : public Base
@@ -414,8 +456,13 @@ class Circle : public Base
       locked = 0;
       Text(" ", BLACK, Small);
       HeadFootText(" ", " ", BLACK, Small);
+	  autoPadding = 5;
+	  lockout = false;
+	  touch = 0;
     }
-
+	
+    ~Circle(){ }
+	
     void Coords(int x, int y, int radius)
     {
       X = x;
@@ -477,6 +524,9 @@ class Circle : public Base
 	  Save_MainColor;
       if (State != lastState)
       {
+	    if(Radius == AUTO)
+	      Radius = max(strlen(pText),strlen(npText))*(FontSize? 8 : 4) + autoPadding;
+	  
         if (_padding > 0)
         {
           if (!locked)
@@ -505,37 +555,30 @@ class Circle : public Base
 
     void ReDraw()
     {
+	  locked = false;
       lastState = 255;
     }
 
     void drawText(bool TxtEnable, bool Button)
     {
-	  Save_MainColor;
       if (TxtEnable) // If there is text for that button, show it.
       {
-        extern uint8_t SmallFont[];
-        extern uint8_t BigFont[];
 
         byte strl = strlen(pText);
         byte strl_2 = strlen(npText);
-
-        if (C1 == C2)
-        {
-          _Disp->setBackColor(C1);
+		if(!Fill)
+          _Disp->setBackColor(_Disp->getBackColor());
+		else 
+		  _Disp->setBackColor(0xFFFFFFFF);
+		
+        if (C1 == C2)     
           _Disp->setColor((tColor != C1) ? tColor : ~tColor);
-        }
         else
         {
           if (Button)
-          {
-            _Disp->setBackColor(C1);
             _Disp->setColor((tColor != C1) ? tColor : ~tColor);
-          }
           else
-          {
-            _Disp->setBackColor(C2);
             _Disp->setColor((tColor != C2) ? tColor : ~tColor);
-          }
         }
 
         if (FontSize) //big font
@@ -562,8 +605,6 @@ class Circle : public Base
         _Disp->print(hText, X - strlen(hText) * (HFFontSize ? 8 : 4), Y - 20);
       if (strcmp(fText, " "))
         _Disp->print(fText, X - strlen(fText) * (HFFontSize ? 8 : 4), Y + 5);
-      
-	  Restore_MainColor;
     }
 
     bool getTouchState()
@@ -574,7 +615,7 @@ class Circle : public Base
       int xc = (touchX > _Disp->getDisplayXSize() ? 0 : touchX);
       int yc = (touchY > _Disp->getDisplayYSize() ? 0 : touchY);
 
-      return ((pow((xc - X), 2) + pow((yc - Y), 2)) <= pow(Radius, 2));
+      return (((xc - X)*(xc - X)) + ((yc - Y)*(yc - Y))) <= (Radius * Radius);
     }
 
     bool Touch(bool draw = true)
@@ -602,30 +643,24 @@ class Circle : public Base
     }
 
     bool Delay(unsigned long T = 1000)
-    {
-      static unsigned long B_current_time;
-      static bool B_timeout;
-      B_timeout = false;
-
-      if (this->getTouchState() && B_timeout == false)
+    { 
+      touch = this->getTouchState();
+	  
+      if (touch==true && lockout == false)
       {
         B_current_time = millis();
-        B_timeout = true;
+        lockout = true;
       }
-      else State = false;
 
-      while (this->getTouchState() && B_timeout)
-      {
-        if ((millis() - B_current_time) >= T)
-        {
-          State = true;
-          break;
-        }
-        else State = false;
-      }
+      if (touch && lockout)
+        State = ((millis() - B_current_time) >= T);
+	  else 
+	  {
+	    State = false; 
+	    lockout = false;
+	  }
+
       this->Draw();
-      B_timeout = false;
-      B_current_time = 0;
 
       return State;
     }
@@ -647,7 +682,9 @@ class Circle : public Base
     bool Lock, State, lastState;
     bool locked;
     char *pText, *npText, *hText, *fText;
-    byte _padding, FontSize, HFFontSize;
+    byte _padding, FontSize, HFFontSize, autoPadding;
+	unsigned long B_current_time;
+    bool lockout, touch;
 };
 
 class Triangle : public Base
@@ -675,13 +712,17 @@ class Triangle : public Base
       _Disp = _base->getDisplay();
       _Touch = _base->getTouch();
       lastState = 0;
-      SetState(false);
+      SetState(true);
       Lock = 0;
       locked = false;
-      Text(" ", BLACK, Small);
+      //Text(" ", BLACK, Small);
 	  HeadFootText(" ", " ", BLACK, Small);
+	  touch = 0;
+	  lockout = false;
     }
-
+    
+	~Triangle(){ }
+	
     void Coords(int x1, int y1, int x2, int y2, int x3, int y3)
     {
       TriPoints.A.x = x1;
@@ -727,7 +768,8 @@ class Triangle : public Base
     }
     */
 
-    void Text(char * PText, char * NPText, word Tcolor, byte fontSize)
+	//Text is difficult to place in a triangle, so I disabled it.
+    /* void Text(char * PText, char * NPText, word Tcolor, byte fontSize)
     {
       pText  = PText;
       npText = NPText;
@@ -738,7 +780,7 @@ class Triangle : public Base
     void Text(char * PText, word Tcolor, byte fontSize)
     {
       Text(PText, PText, Tcolor, fontSize);
-    }
+    } */
 
     void HeadFootText(char * HText, char * FText, word color, byte fontSize)
     {
@@ -762,28 +804,29 @@ class Triangle : public Base
     {
 	  Save_MainColor;
       int Cx, Cx1, Cx2, Cy, Cy1, Cy2;
+	  //delay(1);
       if (State != lastState)
       {
         this->getCoords(&Cx, &Cy, &Cx1, &Cy1, &Cx2, &Cy2);
         if (!locked)
         {
           _Disp->setColor((State ? C1 : C2));
-          drawTriangle(Cx, Cy, Cx1, Cy1, Cx2, Cy2);
 
           if (Fill)
-          {
             fillTriangle(Cx, Cy, Cx1, Cy1, Cx2, Cy2);
-          }
+		  else  
+		    drawTriangle(Cx, Cy, Cx1, Cy1, Cx2, Cy2);
+         
           locked = true;
         }
 
         _Disp->setColor((State ? C1 : C2));
-        drawTriangle(Cx, Cy, Cx1, Cy1, Cx2, Cy2);
 
         if (Fill)
-        {
           fillTriangle(Cx, Cy, Cx1, Cy1, Cx2, Cy2);
-        }
+		else
+		  drawTriangle(Cx, Cy, Cx1, Cy1, Cx2, Cy2);
+        
         lastState = State;
       }
 
@@ -801,6 +844,7 @@ class Triangle : public Base
 
     void ReDraw()
     {
+	  locked = false;
       lastState = 1;
     }
 
@@ -834,9 +878,9 @@ class Triangle : public Base
         Swap(y1, y2);
       }
 
-      A = float(x2 - x1) / float((y2 - y1) ? (y2 - y1) : 1);
-      B = float(x3 - x1) / float((y3 - y1) ? (y3 - y1) : 1);
-      C = float(x3 - x2) / float((y3 - y2) ? (y3 - y2) : 1);
+	  A = (y2 - y1)? (float(x2 - x1) / float(y2 - y1)) : (x2 - x1);
+	  B = (y3 - y1)? (float(x3 - x1) / float(y3 - y1)) : (x3 - x1);
+	  C = (y3 - y2)? (float(x3 - x2) / float(y3 - y2)) : (x3 - x2);
 
       for (int Dy = y1; Dy <= y3; Dy++)
       {
@@ -890,30 +934,24 @@ class Triangle : public Base
     }
 
     bool Delay(unsigned long T = 1000)
-    {
-      static unsigned long B_current_time;
-      static bool B_timeout;
-      B_timeout = false;
-
-      if (this->getTouchState() && B_timeout == false)
+    {   
+      touch = this->getTouchState();
+	  
+      if (touch==true && lockout == false)
       {
         B_current_time = millis();
-        B_timeout = true;
+        lockout = true;
       }
-      else State = false;
 
-      while (this->getTouchState() && B_timeout)
-      {
-        if ((millis() - B_current_time) >= T)
-        {
-          State = true;
-          break;
-        }
-        else State = false;
-      }
+      if (touch && lockout)
+        State = ((millis() - B_current_time) >= T);
+	  else 
+	  {
+	    State = false; 
+	    lockout = false;
+	  }
+
       this->Draw();
-      B_timeout = false;
-      B_current_time = 0;
 
       return State;
     }
@@ -930,7 +968,7 @@ class Triangle : public Base
 	  #define deg_to_rad	0.01745 + 3.1415
       diameter /= 2;
 
-      sides = (sides > 2 ? sides : 3); // This ensures the minimum side number is 3.
+      if(sides < 3) sides = 3; // This ensures the minimum side number is 3.
       int Xpoints[sides], Ypoints[sides];// Set the arrays based on the number of sides entered
       int rads = 360 / sides; // This equally spaces the points.
 
@@ -970,6 +1008,8 @@ class Triangle : public Base
     bool OPT;
     char *pText, *npText, *hText, *fText;
     byte _padding, FontSize, HFFontSize;
+	unsigned long B_current_time;
+    bool lockout, touch;
 
     long Area(long Ax, long Ay, long Bx, long By, long Cx, long Cy)
     {
@@ -992,10 +1032,10 @@ class Triangle : public Base
 
       int dir;
 
-      if (Deg < 90) dir = up;
-      else if (Deg < 180) dir = left; // down
-      else if (Deg < 270) dir = down;
-      else dir = right;
+      if (Deg < 90) dir = Tri_up;
+      else if (Deg < 180) dir = Tri_left; 
+      else if (Deg < 270) dir = Tri_down;
+      else dir = Tri_right;
 
       C.x = x + sin(float(Deg) * Deg_to_rad) * base;
       C.y = y + cos(float(Deg) * Deg_to_rad) * base;
@@ -1011,10 +1051,11 @@ class Triangle : public Base
 };
 
 class Radio
-{
+{	
   public:
     Radio() {}
-
+    ~Radio() {}
+	
     template<class T, size_t N>
     byte RadioButtons(T(&_buttons)[N])
     {
@@ -1026,12 +1067,13 @@ class Radio
       {
         state = _buttons[i]->Touch(false);
         if (state != lastState)
-        {
+        {		
           if (state)
             Output = i + 1;
+			  
           lastState = state;
         }
-
+		
         _buttons[i]->SetState(i == (Output - 1));
         _buttons[i]->Draw();
       }
@@ -1068,6 +1110,8 @@ class Slider : public Base
       Padding(2, WHITE);
       T = -1;
     }
+	
+	~Slider(){ }
 
     void Coords(int x1, int y1, int x2, int y2)
     {
@@ -1288,7 +1332,9 @@ class Swipe : public Base
       _Touch = _base->getTouch();
       ShowSwipeArea(false);
     }
-
+    
+	~Swipe(){ }
+	
     void Coords(int x1, int y1, int x2, int y2)
     {
       X1 = x1;
@@ -1389,6 +1435,9 @@ class Swipe : public Base
 
 class CustomButton : public Base
 {
+  private:
+    byte CBsize;
+	
   protected:
     DISPLAY *_Disp;
     TOUCH *_Touch;
@@ -1400,14 +1449,28 @@ class CustomButton : public Base
       long x;
       long y;
     };
+	
+	Points CustPoints[20];
 
     CustomButton(Base * B): _base(B)
     {
       _Disp = _base->getDisplay();
       _Touch = _base->getTouch();
       lastState = 1;
+      lockout = false;
+	  touch = 0;
     }
-
+	
+	~CustomButton(){ }
+	
+    template<size_t N>
+    void Coords(Points (&points)[N])
+	{
+	  for(byte i = 0; i < N; i++)
+	    CustPoints[i] = points[i];
+	  CBsize = N;
+	}
+	
     void Colors(word c1, word c2, bool fill)
     {
       C1 = c1;
@@ -1470,45 +1533,41 @@ class CustomButton : public Base
       return (A >= (A1 + A2 + A3));
     }
 
-    template<size_t N>
-    bool getTouchState(Points (&point)[N])
+    //template<size_t N>
+    //bool getTouchState(Points (&CustPoints)[N])
+    bool getTouchState()
     {
-      //State = false;
-      for (byte i = 0; i < (N - 1); ++i)
+      for (byte i = 0; i < (CBsize - 1); ++i)
       {
         _Touch->read();
         int touchX = _Touch->getX();
         int touchY = _Touch->getY();
         int xc = (touchX > _Disp->getDisplayXSize() ? 0 : touchX);
         int yc = (touchY > _Disp->getDisplayYSize() ? 0 : touchY);
-        if (PointInCustButton(xc, yc, point[i].x, point[i].y, point[i + 1].x, point[i + 1].y, point[N - 1 - i].x, point[N - 1 - i].y))
-        {
+        if (PointInCustButton(xc, yc, CustPoints[i].x, CustPoints[i].y, CustPoints[i + 1].x, CustPoints[i + 1].y, CustPoints[CBsize - 1 - i].x, CustPoints[CBsize - 1 - i].y))
           return true;
-        }
       }
 
       return false;
     }
 
-    template<size_t N>
-    bool Touch(Points (&point)[N], bool draw = true)
+    bool Touch(bool draw = true)
     {
-      State = this->getTouchState(*&point); // If the buttons coords are touched, return true.
+      State = this->getTouchState(); // If the buttons coords are touched, return true.
       if (draw)
-        this->Draw(*&point);
+        this->Draw();
       return State; // button coords were not touched, return false.
     }
 
-    template<size_t N>
-    bool Toggle(Points (&point)[N])
+    bool Toggle()
     {
-      if ( this->getTouchState(*&point) )
+      if ( this->getTouchState() )
       {
         if (Lock == true) // If this button is pressed, set the latch.
         {
           State = !State;
           Lock = false; // Only allow it to be pressed once and not held.
-          this->Draw(*&point);
+          this->Draw();
         }
       }
       else Lock = true; // Once released allow it to be pressed again.
@@ -1516,52 +1575,44 @@ class CustomButton : public Base
       return State; // Return the buttons state
     }
 
-    template<size_t N>
-    bool Delay(Points (&point)[N], unsigned long T = 1000)
-    {
-      static unsigned long B_current_time;
-      static bool B_timeout;
-      B_timeout = false;
-
-      if (this->getTouchState(*&point) && B_timeout == false)
+    bool Delay(unsigned long T = 1000)
+    { 
+      touch = this->getTouchState();
+	  
+      if (touch==true && lockout == false)
       {
         B_current_time = millis();
-        B_timeout = true;
+        lockout = true;
       }
-      else State = false;
 
-      while (this->getTouchState(*&point) && B_timeout)
-      {
-        if ((millis() - B_current_time) >= T)
-        {
-          State = true;
-          break;
-        }
-        else State = false;
-      }
-      this->Draw(*&point);
-      B_timeout = false;
-      B_current_time = 0;
+      if (touch && lockout)
+        State = ((millis() - B_current_time) >= T);
+	  else 
+	  {
+	    State = false; 
+	    lockout = false;
+	  }
+
+      this->Draw();
 
       return State;
     }
 
-    template<size_t N>
-    void Draw(Points (&point)[N])
+    void Draw()
     {
 	  Save_MainColor;
       if (State != lastState)
       {
         _Disp->setColor(State ? C1 : C2);
-        for (int i = 0; i < (N - 1); ++i)
-          _Disp->drawLine(point[i].x, point[i].y, point[i + 1].x, point[i + 1].y);
+        for (int i = 0; i < (CBsize - 1); ++i)
+          _Disp->drawLine(CustPoints[i].x, CustPoints[i].y, CustPoints[i + 1].x, CustPoints[i + 1].y);
 
-        _Disp->drawLine(point[0].x, point[0].y, point[N - 1].x, point[N - 1].y);
+        _Disp->drawLine(CustPoints[0].x, CustPoints[0].y, CustPoints[CBsize - 1].x, CustPoints[CBsize - 1].y);
 
         if (Fill)
         {
-          for (byte i = 0; i < (N - 1); ++i) {
-            fillCB(point[i].x, point[i].y, point[i + 1].x, point[i + 1].y, point[N - 1 - i].x, point[N - 1 - i].y);
+          for (byte i = 0; i < (CBsize - 1); ++i) {
+            fillCB(CustPoints[i].x, CustPoints[i].y, CustPoints[i + 1].x, CustPoints[i + 1].y, CustPoints[CBsize - 1 - i].x, CustPoints[CBsize - 1 - i].y);
           }
         }
         lastState = State;
@@ -1582,10 +1633,17 @@ class CustomButton : public Base
 
       return abs(area) / 2;
     }
-
+	
+	void SetState(bool S)
+    {
+      State = S;
+    }
+	
   private:
     word C1, C2;
     bool Fill, State, lastState, Lock;
+    unsigned long B_current_time;
+    bool lockout, touch;
 };
 
 class MobileKeyboard : public Base
@@ -1603,7 +1661,17 @@ class MobileKeyboard : public Base
       _Disp = _base->getDisplay();
       _Touch = _base->getTouch();
     }
-
+	
+	~MobileKeyboard(){ }
+    
+	void Colors(word text, word background, word box, bool fill = false)
+	{
+	  Textcolor = text;
+	  Backgnd = (fill?box : background);
+	  Boxcolor = box;
+	  Fill = fill;
+	}
+	
     void SetupMobileKB(int X, int Y, float SX = 320, float SY = 115)
     {
       if (_Disp->orient == LANDSCAPE)
@@ -1655,8 +1723,8 @@ class MobileKeyboard : public Base
       Save_MainColor;
 
       _Disp->setColor(0x0);
-      _Disp->fillRect(0, YoffSet, _Disp->getDisplayXSize() - 1, _Disp->getDisplayYSize() - 1);
-      _Disp->setColor(0xFFFF);
+      _Disp->fillRect(0, YoffSet, SX, SY);
+      _Disp->setColor(WHITE);
       _Disp->setFont(SmallFont);
       _Disp->print(">>", XoffSet - 18, YoffSet + TxtoffSet);
 
@@ -1674,32 +1742,60 @@ class MobileKeyboard : public Base
       else
         _Disp->setFont(SmallFont);
       //SmileyFaces(false);
-      _Disp->setColor(WHITE);
 
       for (byte row = 0; row < 3; row++)
       {
         for (byte col = 3; col < 17; col++)
         {
-          _Disp->drawRoundRect(XoffSet + (_FONT ? 0.09375 : 0.0625)*ScaleX * (col - 3) + (0.046 * ScaleX * pgm_read_byte(&(Mobile_KB[row][0]))) - 0.0125 * ScaleX, (YoffSet) + ((_FONT ? 0.2 : 0.156)*ScaleY * (row + 1)) - 0.017 * ScaleY, XoffSet + (_FONT ? 0.093 : 0.0625)*ScaleX * (col - 3) + (0.046 * ScaleX * pgm_read_byte(&(Mobile_KB[row][0]))) + (_FONT ? 0.05 : 0.025)*ScaleX + 1, (YoffSet) + ((_FONT ? 0.2 : 0.156)*ScaleY * (row + 1)) + (_FONT ? 0.139 : 0.104)*ScaleY);
-
+		  _Disp->setColor(Boxcolor);
+		  if(Fill)
+			_Disp->fillRoundRect(XoffSet + (_FONT ? 0.09375 : 0.0625)*ScaleX * (col - 3) + (0.046 * ScaleX * pgm_read_byte(&(Mobile_KB[row][0]))) - 0.0125 * ScaleX, (YoffSet) + ((_FONT ? 0.2 : 0.156)*ScaleY * (row + 1)) - 0.017 * ScaleY, XoffSet + (_FONT ? 0.093 : 0.0625)*ScaleX * (col - 3) + (0.046 * ScaleX * pgm_read_byte(&(Mobile_KB[row][0]))) + (_FONT ? 0.05 : 0.025)*ScaleX + 1, (YoffSet) + ((_FONT ? 0.2 : 0.156)*ScaleY * (row + 1)) + (_FONT ? 0.139 : 0.104)*ScaleY);
+		  else
+			_Disp->drawRoundRect(XoffSet + (_FONT ? 0.09375 : 0.0625)*ScaleX * (col - 3) + (0.046 * ScaleX * pgm_read_byte(&(Mobile_KB[row][0]))) - 0.0125 * ScaleX, (YoffSet) + ((_FONT ? 0.2 : 0.156)*ScaleY * (row + 1)) - 0.017 * ScaleY, XoffSet + (_FONT ? 0.093 : 0.0625)*ScaleX * (col - 3) + (0.046 * ScaleX * pgm_read_byte(&(Mobile_KB[row][0]))) + (_FONT ? 0.05 : 0.025)*ScaleX + 1, (YoffSet) + ((_FONT ? 0.2 : 0.156)*ScaleY * (row + 1)) + (_FONT ? 0.139 : 0.104)*ScaleY);
+		  _Disp->setColor(Textcolor);
+		  _Disp->setBackColor(Backgnd);
           _Disp->printChar( pgm_read_byte(&(Mobile_KB[row][col])), XoffSet + (_FONT ? 0.093 : 0.0625)*ScaleX * (col - 3) + (0.046 * ScaleX * pgm_read_byte(&(Mobile_KB[row][0]))), (YoffSet) + (_FONT ? 0.2 : 0.156)*ScaleY * (row + 1) - 1);
           if (pgm_read_byte(&(Mobile_KB[row][2])) == col - 2) break;
 
         }
       }
-      _Disp->setColor(BLACK);
-      _Disp->fillRoundRect(CAPS.x1, CAPS.y1, CAPS.x2, CAPS.y2); // shift key
-      _Disp->setColor(WHITE);
-      _Disp->drawRoundRect(CAPS.x1, CAPS.y1, CAPS.x2, CAPS.y2); // shift key
-      _Disp->print("^", ((CAPS.x1 + CAPS.x2) / 2) - (_FONT ? 8 : 4), ((CAPS.y1 + CAPS.y2) / 2) - (_FONT ? 8 : 4) - 2);
-      _Disp->drawRoundRect(SEND.x1, SEND.y1, SEND.x2, SEND.y2);
-      _Disp->print("RTRN", ((SEND.x1 + SEND.x2) / 2) - (_FONT ? 8 : 4) * 4, ((SEND.y1 + SEND.y2) / 2) - (_FONT ? 8 : 4) - 2);
-      _Disp->drawRoundRect(BSP.x1, BSP.y1, BSP.x2, BSP.y2);
-      _Disp->print("BSP", ((BSP.x1 + BSP.x2) / 2) - (_FONT ? 8 : 4) * 3, ((BSP.y1 + BSP.y2) / 2) - (_FONT ? 8 : 4) - 2);
-      _Disp->drawRoundRect(SPACE.x1, SPACE.y1, SPACE.x2, SPACE.y2); // spacebar
-      _Disp->print("SPACE", ((SPACE.x1 + SPACE.x2) / 2) - (_FONT ? 8 : 4) * 5, ((SPACE.y1 + SPACE.y2) / 2) - (_FONT ? 8 : 4) - 2);
-      _Disp->drawRoundRect(NUM.x1, NUM.y1, NUM.x2, NUM.y2); //numKeys
-      _Disp->print("123", ((NUM.x1 + NUM.x2) / 2) - (_FONT ? 8 : 4) * 3, ((NUM.y1 + NUM.y2) / 2) - (_FONT ? 8 : 4) - 2);
+	  _Disp->setColor(Backgnd);
+	  _Disp->fillRoundRect(CAPS.x1, CAPS.y1, CAPS.x2, CAPS.y2); // shift key
+      _Disp->setBackColor(Backgnd);
+	  if(Fill)
+	  {
+	    _Disp->setBackColor(Backgnd); // text background color
+	    _Disp->setColor(Backgnd);
+	    _Disp->fillRoundRect(CAPS.x1, CAPS.y1, CAPS.x2, CAPS.y2); // shift key
+		_Disp->fillRoundRect(SEND.x1, SEND.y1, SEND.x2, SEND.y2);
+		_Disp->fillRoundRect(BSP.x1, BSP.y1, BSP.x2, BSP.y2);
+		_Disp->fillRoundRect(SPACE.x1, SPACE.y1, SPACE.x2, SPACE.y2); // spacebar
+		_Disp->fillRoundRect(NUM.x1, NUM.y1, NUM.x2, NUM.y2); //numKeys
+		
+		_Disp->setColor(Textcolor);
+		// modded
+		_Disp->print("^", ((CAPS.x1 + CAPS.x2) / 2) - (_FONT ? 8 : 4), ((CAPS.y1 + CAPS.y2) / 2) - (_FONT ? 4 : 4) - 2);
+		_Disp->print("RTRN", ((SEND.x1 + SEND.x2) / 2) - (_FONT ? 8 : 4) * 4, ((SEND.y1 + SEND.y2) / 2) - (_FONT ? 4 : 4) - 2);
+		_Disp->print("BSP", ((BSP.x1 + BSP.x2) / 2) - (_FONT ? 8 : 4) * 3, ((BSP.y1 + BSP.y2) / 2) - (_FONT ? 4 : 4) - 2);
+		_Disp->print("SPACE", ((SPACE.x1 + SPACE.x2) / 2) - (_FONT ? 8 : 4) * 5, ((SPACE.y1 + SPACE.y2) / 2) - (_FONT ? 4 : 4) - 2);
+		_Disp->print("123", ((NUM.x1 + NUM.x2) / 2) - (_FONT ? 8 : 4) * 3, ((NUM.y1 + NUM.y2) / 2) - (_FONT ? 4 : 4) - 2);
+	  }
+	  else
+	  { 
+	    _Disp->setColor(Boxcolor);
+        _Disp->drawRoundRect(CAPS.x1, CAPS.y1, CAPS.x2, CAPS.y2); // shift key
+		_Disp->drawRoundRect(SEND.x1, SEND.y1, SEND.x2, SEND.y2);
+		_Disp->drawRoundRect(BSP.x1, BSP.y1, BSP.x2, BSP.y2);
+		_Disp->drawRoundRect(SPACE.x1, SPACE.y1, SPACE.x2, SPACE.y2); // spacebar
+		_Disp->drawRoundRect(NUM.x1, NUM.y1, NUM.x2, NUM.y2); //numKeys
+		
+	    _Disp->setColor(Textcolor);
+		_Disp->print("^", ((CAPS.x1 + CAPS.x2) / 2) - (_FONT ? 8 : 4), ((CAPS.y1 + CAPS.y2) / 2) - (_FONT ? 8 : 4) - 2);
+		_Disp->print("RTRN", ((SEND.x1 + SEND.x2) / 2) - (_FONT ? 8 : 4) * 4, ((SEND.y1 + SEND.y2) / 2) - (_FONT ? 8 : 4) - 2);
+		_Disp->print("BSP", ((BSP.x1 + BSP.x2) / 2) - (_FONT ? 8 : 4) * 3, ((BSP.y1 + BSP.y2) / 2) - (_FONT ? 8 : 4) - 2);
+		_Disp->print("SPACE", ((SPACE.x1 + SPACE.x2) / 2) - (_FONT ? 8 : 4) * 5, ((SPACE.y1 + SPACE.y2) / 2) - (_FONT ? 8 : 4) - 2);
+		_Disp->print("123", ((NUM.x1 + NUM.x2) / 2) - (_FONT ? 8 : 4) * 3, ((NUM.y1 + NUM.y2) / 2) - (_FONT ? 8 : 4) - 2);
+	  }	  
 
       Restore_MainColor;
     }
@@ -1716,23 +1812,41 @@ class MobileKeyboard : public Base
       else
         _Disp->setFont(SmallFont);
       //SmileyFaces(false);
-      _Disp->setColor(WHITE);
+      _Disp->setBackColor(Backgnd);
 
       for (byte row = 0; row < 3; row++)
       {
         for (byte col = 3; col < 17; col++)
         {
-          _Disp->drawRoundRect(XoffSet + (_FONT ? 0.09375 : 0.0625)*ScaleX * (col - 3) + ((_FONT ? 0.0468 : 0.0312)*ScaleX * pgm_read_byte(&(Mobile_NumKeys[row][0]))) - 0.0125 * ScaleX, YoffSet + (_FONT ? 0.2 : 0.1565)*ScaleY * (row + 1) - 0.0173 * ScaleY, XoffSet + (_FONT ? 0.0937 : 0.0625)*ScaleX * (col - 3) + ((_FONT ? 0.0468 : 0.03125)*ScaleX * pgm_read_byte(&(Mobile_NumKeys[row][0]))) + (_FONT ? 0.05 : 0.025)*ScaleX + 0.0003 * ScaleX, YoffSet + ((_FONT ? 0.2 : 0.1565)*ScaleY * (row + 1)) + (_FONT ? 0.139 : 0.1043)*ScaleY);
-
+		  _Disp->setColor(Boxcolor);
+		  if(Fill)
+		  {
+		    _Disp->fillRoundRect(XoffSet + (_FONT ? 0.09375 : 0.0625)*ScaleX * (col - 3) + ((_FONT ? 0.0468 : 0.0312)*ScaleX * pgm_read_byte(&(Mobile_NumKeys[row][0]))) - 0.0125 * ScaleX, YoffSet + (_FONT ? 0.2 : 0.1565)*ScaleY * (row + 1) - 0.0173 * ScaleY, XoffSet + (_FONT ? 0.0937 : 0.0625)*ScaleX * (col - 3) + ((_FONT ? 0.0468 : 0.03125)*ScaleX * pgm_read_byte(&(Mobile_NumKeys[row][0]))) + (_FONT ? 0.05 : 0.025)*ScaleX + 0.0003 * ScaleX, YoffSet + ((_FONT ? 0.2 : 0.1565)*ScaleY * (row + 1)) + (_FONT ? 0.139 : 0.1043)*ScaleY);
+		  }
+		  else
+		  {
+			_Disp->drawRoundRect(XoffSet + (_FONT ? 0.09375 : 0.0625)*ScaleX * (col - 3) + ((_FONT ? 0.0468 : 0.0312)*ScaleX * pgm_read_byte(&(Mobile_NumKeys[row][0]))) - 0.0125 * ScaleX, YoffSet + (_FONT ? 0.2 : 0.1565)*ScaleY * (row + 1) - 0.0173 * ScaleY, XoffSet + (_FONT ? 0.0937 : 0.0625)*ScaleX * (col - 3) + ((_FONT ? 0.0468 : 0.03125)*ScaleX * pgm_read_byte(&(Mobile_NumKeys[row][0]))) + (_FONT ? 0.05 : 0.025)*ScaleX + 0.0003 * ScaleX, YoffSet + ((_FONT ? 0.2 : 0.1565)*ScaleY * (row + 1)) + (_FONT ? 0.139 : 0.1043)*ScaleY);
+          }
+		  _Disp->setColor(Textcolor);
           _Disp->printChar( pgm_read_byte(&(Mobile_NumKeys[row][col])), XoffSet + (_FONT ? 0.0937 : 0.0625)*ScaleX * (col - 3) + ((_FONT ? 0.0468 : 0.03125)*ScaleX * pgm_read_byte(&(Mobile_NumKeys[row][0]))), (YoffSet) + (_FONT ? 0.2 : 0.1565)*ScaleY * (row + 1));
 
           if (pgm_read_byte(&(Mobile_NumKeys[row][2])) == col - 2) break;
         }
       }
-      _Disp->drawRoundRect(NUM.x1, NUM.y1, NUM.x2, NUM.y2); //numKeys
-      _Disp->print("ABC", ((NUM.x1 + NUM.x2) / 2) - (_FONT ? 8 : 4) * 3, ((NUM.y1 + NUM.y2) / 2) - (_FONT ? 8 : 4)- 2);
-      _Disp->drawRoundRect(CAPS.x1, CAPS.y1, CAPS.x2, CAPS.y2);
-      _Disp->print("#", ((CAPS.x1 + CAPS.x2) / 2) - (_FONT ? 8 : 4), ((CAPS.y1 + CAPS.y2) / 2) - (_FONT ? 8 : 4) - 2);
+	  _Disp->setColor(Boxcolor);
+	  if(Fill)
+	  {
+	    _Disp->fillRoundRect(NUM.x1, NUM.y1, NUM.x2, NUM.y2); //numKeys
+		_Disp->fillRoundRect(CAPS.x1, CAPS.y1, CAPS.x2, CAPS.y2);
+	  }
+      else
+	  {
+        _Disp->drawRoundRect(NUM.x1, NUM.y1, NUM.x2, NUM.y2); //numKeys
+		_Disp->drawRoundRect(CAPS.x1, CAPS.y1, CAPS.x2, CAPS.y2);
+	  }
+      _Disp->setColor(Textcolor);
+	  _Disp->print("ABC", ((NUM.x1 + NUM.x2) / 2) - (_FONT ? 8 : 4) * 3, ((NUM.y1 + NUM.y2) / 2) - (_FONT ? 8 : 4)- 2);
+	  _Disp->print("#", ((CAPS.x1 + CAPS.x2) / 2) - (_FONT ? 8 : 4), ((CAPS.y1 + CAPS.y2) / 2) - (_FONT ? 8 : 4) - 2);
     }
 
     void makeSymbolKeys()
@@ -1745,25 +1859,44 @@ class MobileKeyboard : public Base
         _Disp->setFont(BigFont);
       else
         _Disp->setFont(SmallFont);
-      //SmileyFaces(false);
-      _Disp->setColor(WHITE);//White
+      
+      _Disp->setBackColor(Backgnd);
 
       for (byte row = 0; row < 3; row++)
       {
         for (byte col = 3; col < 17; col++)
         {
-          _Disp->drawRoundRect(XoffSet + (_FONT ? 0.09375 : 0.0625)*ScaleX * (col - 3) + ((_FONT ? 0.0468 : 0.03125)*ScaleX * pgm_read_byte(&(Mobile_SymKeys[row][0]))) - 0.0125 * ScaleX, (YoffSet) + ((_FONT ? 0.2 : 0.1565)*ScaleY * (row + 1)) - 0.01739 * ScaleY, XoffSet + (_FONT ? 0.09375 : 0.0625)*ScaleX * (col - 3) + ((_FONT ? 0.0468 : 0.03125)*ScaleX * pgm_read_byte(&(Mobile_SymKeys[row][0]))) + (_FONT ? 0.05 : 0.025)*ScaleX + 0.003125 * ScaleX, (YoffSet) + ((_FONT ? 0.2 : 0.1565)*ScaleY * (row + 1)) + (_FONT ? 0.139 : 0.1043)*ScaleY);
-
+		  _Disp->setColor(Boxcolor);
+		  if(Fill)
+		  {
+		    _Disp->fillRoundRect(XoffSet + (_FONT ? 0.09375 : 0.0625)*ScaleX * (col - 3) + ((_FONT ? 0.0468 : 0.03125)*ScaleX * pgm_read_byte(&(Mobile_SymKeys[row][0]))) - 0.0125 * ScaleX, (YoffSet) + ((_FONT ? 0.2 : 0.1565)*ScaleY * (row + 1)) - 0.01739 * ScaleY, XoffSet + (_FONT ? 0.09375 : 0.0625)*ScaleX * (col - 3) + ((_FONT ? 0.0468 : 0.03125)*ScaleX * pgm_read_byte(&(Mobile_SymKeys[row][0]))) + (_FONT ? 0.05 : 0.025)*ScaleX + 0.003125 * ScaleX, (YoffSet) + ((_FONT ? 0.2 : 0.1565)*ScaleY * (row + 1)) + (_FONT ? 0.139 : 0.1043)*ScaleY);
+		  }
+		  else
+		  {
+            _Disp->drawRoundRect(XoffSet + (_FONT ? 0.09375 : 0.0625)*ScaleX * (col - 3) + ((_FONT ? 0.0468 : 0.03125)*ScaleX * pgm_read_byte(&(Mobile_SymKeys[row][0]))) - 0.0125 * ScaleX, (YoffSet) + ((_FONT ? 0.2 : 0.1565)*ScaleY * (row + 1)) - 0.01739 * ScaleY, XoffSet + (_FONT ? 0.09375 : 0.0625)*ScaleX * (col - 3) + ((_FONT ? 0.0468 : 0.03125)*ScaleX * pgm_read_byte(&(Mobile_SymKeys[row][0]))) + (_FONT ? 0.05 : 0.025)*ScaleX + 0.003125 * ScaleX, (YoffSet) + ((_FONT ? 0.2 : 0.1565)*ScaleY * (row + 1)) + (_FONT ? 0.139 : 0.1043)*ScaleY);
+		  }
+		  _Disp->setColor(Textcolor);
           _Disp->printChar( pgm_read_byte(&(Mobile_SymKeys[row][col])), XoffSet + (_FONT ? 0.0937 : 0.0625)*ScaleX * (col - 3) + ((_FONT ? 0.0468 : 0.0313)*ScaleX * pgm_read_byte(&(Mobile_SymKeys[row][0]))), (YoffSet) + (_FONT ? 0.2 : 0.1565)*ScaleY * (row + 1));
           //_Disp->printChar( pgm_read_byte(&(Mobile_SymKeys[row][col])), XoffSet + (_FONT? 30:20)*(col-3) + ((_FONT? 15:10)* pgm_read_byte(&(Mobile_SymKeys[row][0]))), (YoffSet) + (_FONT? 23:18)*(row+1));
           if (pgm_read_byte(&(Mobile_SymKeys[row][2])) == col - 2) break;
         }
       }
-      _Disp->drawRoundRect(CAPS.x1, CAPS.y1, NUM.x2, CAPS.y2); //numKeys
-      _Disp->print("123", ((CAPS.x1 + NUM.x2) / 2) - (_FONT ? 8 : 4) * 3, ((CAPS.y1 + CAPS.y2) / 2) - (_FONT ? 8 : 4) - 2);
-      _Disp->drawRoundRect(NUM.x1, NUM.y1, NUM.x2, NUM.y2); //numKeys
-      _Disp->print("ABC", ((NUM.x1 + NUM.x2) / 2) - (_FONT ? 8 : 4) * 3, ((NUM.y1 + NUM.y2) / 2) - (_FONT ? 8 : 4) - 2);
-      //_Disp->print("#", ((CAPS.x1 + CAPS.x2)/2) - 7, ((CAPS.y1 + CAPS.y2)/2) - 8);
+	  _Disp->setColor(Boxcolor);
+	  if(Fill)
+	  {
+	    _Disp->fillRoundRect(CAPS.x1, CAPS.y1, NUM.x2, CAPS.y2); //numKeys
+		_Disp->fillRoundRect(NUM.x1, NUM.y1, NUM.x2, NUM.y2); //numKeys
+	  }
+	  else
+	  {
+	    _Disp->drawRoundRect(CAPS.x1, CAPS.y1, NUM.x2, CAPS.y2); //numKeys
+		_Disp->drawRoundRect(NUM.x1, NUM.y1, NUM.x2, NUM.y2); //numKeys
+	  }
+  
+      _Disp->setColor(Textcolor);
+	  _Disp->print("123", ((CAPS.x1 + NUM.x2) / 2) - (_FONT ? 8 : 4) * 3, ((CAPS.y1 + CAPS.y2) / 2) - (_FONT ? 8 : 4) - 2);
+	  _Disp->print("ABC", ((NUM.x1 + NUM.x2) / 2) - (_FONT ? 8 : 4) * 3, ((NUM.y1 + NUM.y2) / 2) - (_FONT ? 8 : 4) - 2);
+
     }
 
     void clearMSG()
@@ -1789,36 +1922,45 @@ class MobileKeyboard : public Base
           {
             if ( TouchButton(CAPS.x1, CAPS.y1, CAPS.x2, CAPS.y2))
             {
-              _Disp->setColor(WHITE);
+              _Disp->setColor(~Boxcolor);
               _Disp->fillRoundRect(CAPS.x1, CAPS.y1, CAPS.x2, CAPS.y2); // shift key
-              _Disp->setColor(BLACK);
-              _Disp->setBackColor(WHITE);
+              _Disp->setColor(Textcolor);
+              _Disp->setBackColor(~Boxcolor);
               _Disp->print("^", ((CAPS.x1 + CAPS.x2) / 2) - (_FONT ? 8 : 4), ((CAPS.y1 + CAPS.y2) / 2) - (_FONT ? 8 : 4));
               Shift = true;
-              //makeShiftKeys();
-              _Disp->setColor(WHITE);
-              _Disp->setBackColor(BLACK);
+              // //makeShiftKeys();
+               _Disp->setColor(WHITE);
+               _Disp->setBackColor(GREEN);
             }
           }
           else if (Type == 1)
           {
-            if ( TouchButton(CAPS.x1, CAPS.y1, _symbol ? NUM.x2 : CAPS.x2, CAPS.y2))
+		    byte SymT = TouchButton(CAPS.x1, CAPS.y1, _symbol ? NUM.x2 : CAPS.x2, CAPS.y2);
+			static byte lastST = 0;
+            if (SymT != lastST)
             {
-              if (_symbol == 0)
-              {
-                _symbol = true;
-                makeSymbolKeys();
-              }
-              else
-              {
-                _symbol = false;
-                _Disp->setColor(BLACK);//black
-                _Disp->fillRect(0.01562 * ScaleX, YoffSet + ((_FONT ? 0.6 : 0.4434) - 0.0173)*ScaleY, XoffSet + ((_FONT ? 0.6562 : 0.4562) + 0.05312)*ScaleX, YoffSet + ((_FONT ? 0.6 : 0.4173) + 0.1739)*ScaleY);
-                //_Disp->fillRect(5,(YoffSet) + ((_FONT? 23:17)*3) - 2, XoffSet + (_FONT? 30:15)*6 +(_FONT? 15:28)*2 + 17,(YoffSet) + ((_FONT? 23:16)*3) +20);
-                _Disp->setColor(WHITE);
-                _Disp->drawRoundRect(CAPS.x1, CAPS.y1, CAPS.x2, CAPS.y2); // shift key
-                makeNumberKeys();
-              }
+			  if(SymT)
+			  {
+                if (_symbol == 0)
+                {
+                  _symbol = true;
+                  makeSymbolKeys();
+                }
+                else
+                {
+                  _symbol = false;
+                  _Disp->setColor(BLACK);//black
+                  _Disp->fillRect(0.01562 * ScaleX, YoffSet + ((_FONT ? 0.6 : 0.4434) - 0.0173)*ScaleY, XoffSet + ((_FONT ? 0.6562 : 0.4562) + 0.05312)*ScaleX, YoffSet + ((_FONT ? 0.6 : 0.4173) + 0.1739)*ScaleY);
+                  //_Disp->fillRect(5,(YoffSet) + ((_FONT? 23:17)*3) - 2, XoffSet + (_FONT? 30:15)*6 +(_FONT? 15:28)*2 + 17,(YoffSet) + ((_FONT? 23:16)*3) +20);
+                  //_Disp->setColor(WHITE);
+				  if(Fill)
+				    _Disp->fillRoundRect(CAPS.x1, CAPS.y1, CAPS.x2, CAPS.y2); // caps key
+				  else
+                    _Disp->drawRoundRect(CAPS.x1, CAPS.y1, CAPS.x2, CAPS.y2); // caps key
+                  makeNumberKeys();
+                }
+			  }
+			  lastST = SymT;
             }
           }
           if (Mobile_KB[row][1] == col) break;
@@ -1865,13 +2007,20 @@ class MobileKeyboard : public Base
               }
             }
           }
-          if (TouchButton(SPACE.x1, SPACE.y1, SPACE.x2, SPACE.y2) ) // spacebar
-          {
-            MSG[idx] = ' ';
-            (idx + 1) < BUF ? idx++ : idx;
-            _Disp->setBackColor(_Disp->getBackColor());
-            _Disp->print(MSG, XoffSet, YoffSet + TxtoffSet);
-          }
+		  
+          byte Touch = TouchButton(SPACE.x1, SPACE.y1, SPACE.x2, SPACE.y2); // spacebar
+		  static byte lastT = 0;
+		  if(Touch != lastT)
+		  {
+			if(Touch)
+			{
+              MSG[idx] = ' ';
+              (idx + 1) < BUF ? idx++ : idx;
+              _Disp->setBackColor(_Disp->getBackColor());
+              _Disp->print(MSG, XoffSet, YoffSet + TxtoffSet);
+			}
+			lastT = Touch;
+          }  
         }
       }
       if (TouchButton( SEND.x1, SEND.y1, SEND.x2, SEND.y2))
@@ -1990,6 +2139,8 @@ class MobileKeyboard : public Base
     word	FrontColor, BackColor;
     float 	ScaleX, ScaleY;
     bool    Shift;
+	word	Textcolor, Backgnd, Boxcolor;
+	bool 	Fill;
 
     struct {
       int x1;
@@ -2017,7 +2168,7 @@ class MobileKeyboard : public Base
     }
 };
 
-class ProgressBar : public Base
+class Meter : public Base
 {
   protected:
     bool orient;
@@ -2025,7 +2176,7 @@ class ProgressBar : public Base
     Base *_base;
 
   public:
-    ProgressBar(Base * B, bool _o) : _base(B), orient(_o)
+    Meter(Base * B, bool _o) : _base(B), orient(_o)
     {
       _Disp = _base->getDisplay();
 
@@ -2040,6 +2191,8 @@ class ProgressBar : public Base
       T = -1;
     }
 
+	~Meter(){ }
+	
     void Coords(int x1, int y1, int x2, int y2)
     {
       X1 = x1;
@@ -2062,14 +2215,15 @@ class ProgressBar : public Base
       BC = bc;
     }
 
-    void Percentages(byte hi, byte mid, byte low)
+    void Percentages(byte hi, byte mid, byte low = 0)
     {
-      Hi = hi;
-      Mid = mid;
-      Low = low;
+	  int T_height = ((Y2 - Y1) - (_padding * 2));
+      Hi =  Y2 - (T_height * (float(hi) / 100.0));
+      Mid = Y2 - (T_height * (float(mid) / 100.0));
+      Low = Y2 - (T_height * (float(low) / 100.0));
     }
 
-    void SetDirection(bool Dir)
+    void SetDirection(bool Dir) // Not used at this time
     {
       Direction = Dir;
     }
@@ -2186,14 +2340,12 @@ class ProgressBar : public Base
       {
         if (T <= Y)
         {
-          if (Y <= (((Y2 + Y1) - _padding * 2) * (1.0 - float(Low) / 100.0)))
-            _Disp->setColor(C3);
-          if (Y <= (((Y2 + Y1) - _padding * 2) * (1.0 - float(Mid) / 100.0)))
-            _Disp->setColor(C2);
-          if (Y <= (((Y2 + Y1) - _padding * 2) * (1.0 - float(Hi) / 100.0)))
-            _Disp->setColor(C1);
-
-          //if ((Y % (((Y2 + Y1) - _padding*2)/(100/8))) == 0) continue;
+          if((Y <= Low) && (Y > Mid)) 
+		    _Disp -> setColor(C3);
+		  else if((Y <= Mid) && (Y > Hi))
+		    _Disp -> setColor(C2);
+		  else if((Y <= Hi) && (Y > Y1))
+		    _Disp -> setColor(C1);
         }
         else
           _Disp->setColor(BC);
@@ -2209,10 +2361,19 @@ class ProgressBar : public Base
 	  if(textEnable)
 	  {
         _Disp->setColor(P_Tcolor);
-        _Disp->setBackColor(0x0);
+		Restore_MainColor;
+        _Disp->setBackColor(_Disp->getBackColor());
         _Disp->setFont(P_textSize ? BigFont : SmallFont);
         char buf[7];
-        sprintf(buf, " %d%% ", map(tmpGV, (orient ? Y2 : X2), (orient ? Y1 : X1), 0, 100));
+		byte val = map(tmpGV, (orient ? Y2 : X2), (orient ? Y1 : X1), 0, 100);
+		buf[0] = ' ';
+		buf[1] = val < 100? ' ' : (val / 100) + '0';
+		buf[2] = val < 10? ' ' : ((val / 10) % 10) + '0';
+		buf[3] = (val % 10) + '0';
+		buf[4] = '%';
+		buf[5] = ' ';
+		buf[6] = 0;
+
         _Disp->print(buf, P_TX, P_TY);
 	  }
 	  Restore_MainColor;
@@ -2275,12 +2436,201 @@ class ProgressBar : public Base
     word C1, C2, C3, BC, PadColor, Tcolor, P_Tcolor;//12
     int TX, TY, P_TX, P_TY;
     char * text;
-    byte Hi, Mid, Low, Off;
+    int Hi, Mid, Low, Off;
     bool Round, Fill, Direction;//3
     bool locked;//1
     long L, H;//8
     int Value;//2
     int T;
     byte textSize, P_textSize;
+};
+
+class ProgressBar : public Base
+{ 
+  protected:
+    DISPLAY *_Disp;
+    Base *_base;
+
+  public:
+    ProgressBar(Base * B) : _base(B)
+    {
+      _Disp = _base->getDisplay();
+    }
+	
+	~ProgressBar(){ }
+	
+    void Coords(int x1, int y1, int x2, int y2)
+	{
+	  X1 = x1;
+      Y1 = y1;
+      X2 = x2;
+      Y2 = y2;
+	}
+	
+	void Attributes(word color, bool fontsize, char type, long bgc = 0xFFFFFFFF)
+	{
+	  Color = color;
+	  BGC = bgc;
+	  Type = type;
+	  FS = fontsize;
+	}
+	
+	void Attributes(char * _text, word color, bool fontsize, char filler = ' ', long bgc = 0xFFFFFFFF)
+	{
+	  Color = color;
+	  BGC = bgc;
+	  text = _text;
+	  Type = '#';
+	  Filler = filler;
+	  FS = fontsize;
+	}
+	
+	/*  Conflict with these two
+	void Attributes(char * _text, word color, bool fontsize, char filler = ' ')
+	{
+	  Attributes(_text, color, fontsize, filler, 0xFFFFFFFF);
+	}
+	
+	void Attributes(char * _text, word color, bool fontsize, long bgc = 0xFFFFFFFF)
+	{
+	  Attributes(_text, color, fontsize, ' ', bgc);
+	}
+	*/
+	
+	void Progress()
+	{
+	  unsigned int centerBar, Leftside, length = strlen(text);
+	  _Disp->setColor(Color);
+	  _Disp->setBackColor(BGC);
+	  
+	  if(X2 == AUTO)
+	    X2 = X1 + length*(FS? 16 : 8) + 10;
+		
+	  if(Y2 == AUTO)
+	    Y2 = Y1 + (FS? 16 : 12) + 10;
+	  
+	  if(Type == '#')
+	  {
+	    centerBar = (X1 + X2)/2;
+		
+		Leftside = centerBar - length*(FS? 8 : 4);
+	  }
+	  
+	  //Overwrite Leftside from above
+	  if(X2 == AUTO)
+	    Leftside = X1;
+
+	  for (unsigned int L = X1, i = 0; L < X2 ; L++)
+	  {
+		switch (Type)
+		{
+		  case '/':
+			_Disp->drawLine(L, Y1, L - 10, Y2);
+			break;
+		  
+		  case '\\':
+			_Disp->drawLine(L - 10, Y1, L, Y2);
+			break;
+			
+		  case '>':
+			_Disp->drawLine(L, Y1, L + 10, (Y1 + Y2)/2);
+			_Disp->drawLine(L + 10, (Y1 + Y2)/2, L, Y2);
+			break;
+		  
+		  case '|':
+			_Disp->drawVLine(L, Y1, Y2 - Y1);
+			break;
+          
+		  case '#':	
+		    if(L >= Leftside ) // && i < length
+			{
+			  if(i < length)
+			  {
+		        _Disp->printChar(*text++, L, Y1);
+				i++;
+			  }
+			  else 
+			    _Disp->printChar(Filler, L, Y1);
+			}
+			else 
+			  _Disp->printChar(Filler, L, Y1);
+			
+			L += (FS? 16 : 12)-1;
+			break;
+			
+          default:
+            _Disp->printChar(Type, L, Y1);
+			L += (FS? 16 : 12)-1;
+			break;			
+		}
+		
+		delay(50); // some delay
+	  }
+	}
+	
+	private:
+      int X1, Y1, X2, Y2; //16
+	  word Color;
+	  long BGC;
+	  char Type, *text, Filler;
+	  bool FS;
+};
+
+class Cycle 
+{
+    public:
+	Cycle() {lastStateUp = 0; lastStateDn = 0; counter = -1;}
+	~Cycle() {}
+	
+    template<class B, class Func, size_t N>
+    byte CycleButton(B button, Func(&_functions)[N])
+    {	
+	    byte state = button->Touch(true);
+	    if(state != lastStateUp)
+	    { 
+	        if(state == true)
+		    {
+		      counter++;
+			  if(counter > N-1)
+			    counter = 0;
+		    }
+			lastStateUp = state;
+		    _functions[counter]();
+	    }
+	}
+	
+	template<class B_1, class B_2, class Func, size_t N>
+    byte CycleButton(B_1 buttonUp, B_2 buttonDn, Func(&_functions)[N], byte roll = false)
+    {	
+	    byte stateUp = buttonUp->Touch(true);
+		byte stateDn = buttonDn->Touch(true);
+		
+	    if(stateUp != lastStateUp)
+	    { 
+	        if(stateUp == true)
+		    {
+		      counter++;
+			  if(counter > N-1)
+			    counter = roll? 0 : N-1;
+		    }
+			lastStateUp = stateUp;
+		    _functions[counter]();
+	    }
+		
+		if(stateDn != lastStateDn)
+	    { 
+	        if(stateDn == true)
+		    {
+		      counter--;
+			  if(counter < 0)
+			    counter = roll? N-1 : 0;
+		    }
+			lastStateDn = stateDn;
+		    _functions[counter]();
+	    }
+	}
+	private:
+	   byte lastStateUp, lastStateDn;
+	   int counter; // wont work correctly as type char
 };
 #endif
