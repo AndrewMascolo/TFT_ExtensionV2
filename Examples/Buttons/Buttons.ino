@@ -25,7 +25,7 @@ void setup()
   myGLCD.clrScr();
   myGLCD.setFont(SmallFont);
   myTouch.InitTouch(LANDSCAPE);
-  myTouch.setPrecision(PREC_MEDIUM);
+  myTouch.setPrecision(PREC_HI);
   myGLCD.fillScr(BLACK); // these two should be the same
   myGLCD.setBackColor(BLACK); // ^^^^^^^^^
 
@@ -67,13 +67,12 @@ void setup()
 
 void loop()
 {
-   Button.Delay(1000);
-   Button1.Delay(1000);
+   Button.DoubleClick();
+   Button1.Touch();
    Button2.Delay(1000);
    
-   CButton.Touch();
+   CButton.DoubleClick();
    CButton1.Touch();
-   //TButton1.Touch();
-   //The triangles are there but there is a glitch I am still working out.
+  
    myTRB.RadioButtons(myTButtons);  
-}
+}  

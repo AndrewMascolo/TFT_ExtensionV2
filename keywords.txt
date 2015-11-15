@@ -16,6 +16,7 @@ ProgressBar	KEYWORD1
 Touch	KEYWORD2
 Toggle	KEYWORD2
 Delay	KEYWORD2
+DoubleClick	KEYWORD2
 Coords	KEYWORD2
 Colors	KEYWORD2
 Padding	KEYWORD2
@@ -30,6 +31,7 @@ SetDirection	KEYWORD2
 SetRange	KEYWORD2
 SetValue	KEYWORD2
 SetStartingValue	KEYWORD2
+ChangePercentage	KEYWORD2
 ShowSwipeArea	KEYWORD2
 GetValue	KEYWORD2
 SwipeFromArea	KEYWORD2
@@ -41,6 +43,8 @@ HeaderText	KEYWORD2
 FooterText	KEYWORD2
 ProgressText	KEYWORD2
 CycleButton	KEYWORD2
+TextRange	KEYWORD2
+ArcDegrees	KEYWORD2
 
 Tri_up	LITERAL1
 Tri_down	LITERAL1
@@ -77,6 +81,8 @@ NoBars	LITERAL1
 Bars	LITERAL1
 NoRoll	LITERAL1
 Roll	LITERAL1
+INSIDE	LITERAL1
+OUTSIDE	LITERAL1
 
 AUTO	LITERAL1
 
