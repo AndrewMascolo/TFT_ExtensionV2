@@ -5,7 +5,7 @@
 
 extern uint8_t SmallFont[];
 
-UTFT     myGLCD(CTE70, 25, 26, 27, 28);
+UTFT    myGLCD(CTE70, 25, 26, 27, 28);
 UTouch  myTouch( 6, 5, 4, 3, 2);
 
 Base B(&myGLCD, &myTouch); // Base class, NEEDED!!!
@@ -36,7 +36,7 @@ void setup()
   Button1.Coords(110, 10, 160, 60);
   Button1.Colors(0xD7E0, 0x001F, SQUARED, FILL);
   Button1.Draw();
-
+  
   Button2.Coords(210, 10, 260, 60);
   Button2.Colors(0xD7E0, 0x001F, SQUARED, NOFILL);
   Button2.Text("1","2", WHITE, Big);

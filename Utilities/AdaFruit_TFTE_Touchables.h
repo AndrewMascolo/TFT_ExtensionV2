@@ -3,6 +3,19 @@
 
 class Box : public Base
 {
+	struct Properties
+	{
+	  int x;
+	  int y;
+	  int width;
+	  int height;
+	  int x2;
+	  int y2;
+	  word C1, C2, PadColor, tColor, HFcolor;
+	  bool Round, Fill;
+	  byte PaddingSize, FontSize, HFFontSize;
+	}Props;
+	
   protected:
     byte State, lastState;
     TFT_Display *_Disp;
@@ -39,18 +52,20 @@ class Box : public Base
 
     void Coords(int x1, int y1, int x2, int y2)
     {
-      X1 = x1;
-      Y1 = y1;
-      X2 = x2;
-      Y2 = y2;
+      Props.x = x1;
+      Props.y = y1;
+      Props.x2 = x2;
+      Props.y2 = y2;
+	  Props.width = x2-x1;
+	  Props.height = y2-y1;
     }
 
     void Colors(uint16_t c1, uint16_t c2, bool round, bool fill)
     {
-      C1 = c1;
-      C2 = c2;
-      Round = round;
-      Fill = fill;
+      Props.C1 = c1;
+      Props.C2 = c2;
+      Props.Round = round;
+      Props.Fill = fill;
     }
 
     void Colors(uint16_t color, bool round, bool fill)
@@ -60,16 +75,16 @@ class Box : public Base
 
     void Padding(byte padding = 0, uint16_t padColor = WHITE)
     {
-      _padding = padding;
-      PadColor = padColor;
+      Props.PaddingSize = padding;
+      Props.PadColor = padColor;
     }
 
     void Text(char * PText, char * NPText, uint16_t Tcolor, byte fontSize)
     {
       pText = PText;
       npText = NPText;
-      FontSize = fontSize;
-      tColor = Tcolor;
+      Props.FontSize = fontSize;
+      Props.tColor = Tcolor;
     }
 
     void Text(char * PText, uint16_t Tcolor, byte fontSize)
@@ -81,8 +96,8 @@ class Box : public Base
     {
       hText = HText;
       fText = FText;
-      HFFontSize = fontSize;
-      HFcolor = color;
+      Props.HFFontSize = fontSize;
+      Props.HFcolor = color;
     }
 
     void HeaderText(char * HText, uint16_t color, byte fontSize)
@@ -99,39 +114,39 @@ class Box : public Base
     {
 	  //Save_MainColor;
 	  
-	  if(X2 == AUTO)
-	    X2 = X1 + max(strlen(pText),strlen(npText))*(6*(FontSize+1)) + 10;//autoPadding;
-	  if(Y2 == AUTO)
-	    Y2 = Y1 + (8*(FontSize+1)) + 8;//autoPadding;
+	  if(Props.x2 == AUTO)
+	    Props.x2 = Props.x + max(strlen(pText),strlen(npText))*(6*(Props.FontSize+1)) + 10;//autoPadding;
+	  if(Props.y2 == AUTO)
+	    Props.y2 = Props.y + (8*(Props.FontSize+1)) + 8;//autoPadding;
 		
       if (State != lastState)
       {
-        if (_padding > 0) //Padding for the button
+        if (Props.PaddingSize > 0) //Padding for the button
         {
           if (!locked)
           {
-            if (Fill)
-              (Round ? _Disp->fillRoundRect(X1, Y1, X2-X1, Y2-Y1,2, PadColor) : _Disp->fillRect(X1, Y1, X2-X1, Y2-Y1, PadColor));
+            if (Props.Fill)
+              (Props.Round ? _Disp->fillRoundRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y,2, Props.PadColor) : _Disp->fillRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y, Props.PadColor));
             else
-              (Round ? _Disp->drawRoundRect(X1, Y1, X2-X1, Y2-Y1,2, PadColor) : _Disp->drawRect(X1, Y1, X2-X1, Y2-Y1, PadColor));
+              (Props.Round ? _Disp->drawRoundRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y,2, Props.PadColor) : _Disp->drawRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y, Props.PadColor));
 
             locked = true;
           }
 
-          if (Fill)
-            (Round ? _Disp->fillRoundRect(X1 + _padding, Y1 + _padding, X2-X1 - _padding*2, Y2-Y1 - _padding*2,2,(State ? C1 : C2)) : _Disp->fillRect(X1 + _padding, Y1 + _padding, X2-X1 - _padding*2, Y2-Y1 - _padding*2,(State ? C1 : C2)) );
+          if (Props.Fill)
+            (Props.Round ? _Disp->fillRoundRect(Props.x + Props.PaddingSize, Props.y + Props.PaddingSize, Props.x2-Props.x - Props.PaddingSize*2, Props.y2-Props.y - Props.PaddingSize*2,2,(State ? Props.C1 : Props.C2)) : _Disp->fillRect(Props.x + Props.PaddingSize, Props.y + Props.PaddingSize, Props.x2-Props.x - Props.PaddingSize*2, Props.y2-Props.y - Props.PaddingSize*2,(State ? Props.C1 : Props.C2)) );
           else
-            (Round ? _Disp->drawRoundRect(X1 + _padding, Y1 + _padding, X2-X1 - _padding*2, Y2-Y1 - _padding*2,2,(State ? C1 : C2))  : _Disp->drawRect(X1 + _padding, Y1 + _padding, X2-X1 - _padding*2, Y2-Y1 - _padding*2,(State ? C1 : C2)) );
+            (Props.Round ? _Disp->drawRoundRect(Props.x + Props.PaddingSize, Props.y + Props.PaddingSize, Props.x2-Props.x - Props.PaddingSize*2, Props.y2-Props.y - Props.PaddingSize*2,2,(State ? Props.C1 : Props.C2))  : _Disp->drawRect(Props.x + Props.PaddingSize, Props.y + Props.PaddingSize, Props.x2-Props.x - Props.PaddingSize*2, Props.y2-Props.y - Props.PaddingSize*2,(State ? Props.C1 : Props.C2)) );
         }
         else
         {
-          if (Fill)
-            (Round ? _Disp->fillRoundRect(X1, Y1, X2-X1, Y2-Y1,2,(State ? C1 : C2)) : _Disp->fillRect(X1, Y1, X2-X1, Y2-Y1,(State ? C1 : C2)));
+          if (Props.Fill)
+            (Props.Round ? _Disp->fillRoundRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y,2,(State ? Props.C1 : Props.C2)) : _Disp->fillRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y,(State ? Props.C1 : Props.C2)));
           else
-            (Round ? _Disp->drawRoundRect(X1, Y1, X2-X1, Y2-Y1,2,(State ? C1 : C2)) : _Disp->drawRect(X1, Y1, X2-X1, Y2-Y1,(State ? C1 : C2)));
+            (Props.Round ? _Disp->drawRoundRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y,2,(State ? Props.C1 : Props.C2)) : _Disp->drawRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y,(State ? Props.C1 : Props.C2)));
         }
-		if(Fill)
-		  setBackColor(State ? C1 : C2);
+		if(Props.Fill)
+		  setBackColor(State ? Props.C1 : Props.C2);
         drawText(TE, State);
 
         lastState = State;
@@ -152,39 +167,39 @@ class Box : public Base
       {
         byte strl = strlen(pText);
         byte strl_2 = strlen(npText);
-        int Xpos = (X2 + X1) / 2; // find the center of the button
-        int Ypos = (Y2 + Y1) / 2; // -----------------------------
+        int Xpos = (Props.x2 + Props.x) / 2; // find the center of the button
+        int Ypos = (Props.y2 + Props.y) / 2; // -----------------------------
 		  
-        if (C1 == C2)
-		  _Disp->setTextColor(((tColor != C1) ? tColor : ~tColor), getBackColor());
+        if (Props.C1 == Props.C2)
+		  _Disp->setTextColor(((Props.tColor != Props.C1) ? Props.tColor : ~Props.tColor), getBackColor());
           // Show the text color
         else
         {
-          _Disp->setTextColor(((tColor != (Button?C1:C2)) ? tColor : ~tColor), getBackColor());
+          _Disp->setTextColor(((Props.tColor != (Button?Props.C1:Props.C2)) ? Props.tColor : ~Props.tColor), getBackColor());
         }
 		
-		_Disp->setTextSize(FontSize + 1);
+		_Disp->setTextSize(Props.FontSize + 1);
 		if (Button)
 		{
-		  _Disp->setCursor(Xpos - (strl * (3*(FontSize+1))), Ypos - (4*(FontSize+1))+1);
+		  _Disp->setCursor(Xpos - (strl * (3*(Props.FontSize+1))), Ypos - (4*(Props.FontSize+1))+1);
 		  _Disp->print(pText); // small font is 8x12
 		}
 		else
 		{
-		  _Disp->setCursor(Xpos - (strl_2 * (3*(FontSize+1))), Ypos - (4*(FontSize+1))+1);
+		  _Disp->setCursor(Xpos - (strl_2 * (3*(Props.FontSize+1))), Ypos - (4*(Props.FontSize+1))+1);
 		  _Disp->print(npText);
 		}
 		
-        _Disp->setTextColor(HFcolor, getBackColor());
-        _Disp->setTextSize(HFFontSize ? 2 : 1);
+        _Disp->setTextColor(Props.HFcolor, getBackColor());
+        _Disp->setTextSize(Props.HFFontSize ? 2 : 1);
         if (strcmp(hText, " "))
 		{
-		  _Disp->setCursor(((X1 + X2) / 2) - strlen(hText) * (HFFontSize ? 5 : 2.5f), Y1 - 20);
+		  _Disp->setCursor(((Props.x + Props.x2) / 2) - strlen(hText) * (Props.HFFontSize ? 5 : 2.5f), Props.y - 20);
           _Disp->print(hText);
 		}
         if (strcmp(fText, " "))
 		{
-		  _Disp->setCursor(((X1 + X2) / 2) - strlen(fText) * (HFFontSize ? 5 : 2.5f), Y2 + 5);
+		  _Disp->setCursor(((Props.x + Props.x2) / 2) - strlen(fText) * (Props.HFFontSize ? 5 : 2.5f), Props.y2 + 5);
           _Disp->print(fText);
 		}
       }
@@ -219,7 +234,7 @@ class Box : public Base
 			y = _Touch->getY();	
 			break;
 		}
-		return (IsWithin(x, X1, X2) & IsWithin(y, Y1, Y2));
+		return (IsWithin(x, Props.x, Props.x2) & IsWithin(y, Props.y, Props.y2));
 	  }
 	  else
 	    return false;
@@ -317,17 +332,53 @@ class Box : public Base
     {
       State = S;
     }
+	
+	byte getState()
+	{
+	  return this->State;
+	}
 
     void Unlock()
     {
       locked = false;
     }
-
+    
+	uint16_t getButtonPressedColor()
+	{
+	  return Props.C1;
+	}
+	
+	uint16_t getButtonReleasedColor()
+	{
+	  return Props.C2;
+	}
+	
+	uint16_t getButtonTextColor()
+	{
+	  return Props.tColor;
+	}
+	
+	uint16_t getButtonPaddingColor()
+	{
+	  return Props.PadColor;
+	}
+	
+	uint16_t getButtonHeadFootColor()
+	{
+	  return Props.HFcolor;
+	}
+	
+	void getText(char* text)
+	{
+	  strcpy(text, (getState()? pText : npText));
+	}
+	
+	Properties getButtonProperties()
+	{
+	  return Props;
+	}
+	
   private:
-    int X1, Y1, X2, Y2;
-    byte _padding, FontSize, HFFontSize;
-    uint16_t C1, C2, PadColor, tColor, HFcolor;
-    bool Round, Fill;
     bool Lock;
     bool locked;
 	byte lastTouch, gotfirst, released;
@@ -346,6 +397,16 @@ class Circle : public Base
     Base *_base;
 
   public:
+    struct Properties
+	{
+	  int x;
+	  int y;
+	  int radius;
+	  word C1, C2, PadColor, tColor, HFcolor;
+      bool Fill;
+	  byte PaddingSize, FontSize, HFFontSize, autoPadding;
+	}Props;
+	
     Circle(Base * B): _base(B)
     {
       _Disp = _base->getDisplay();
@@ -356,7 +417,7 @@ class Circle : public Base
       Text(" ", BLACK, Small);
       HeadFootText(" ", " ", BLACK, Small);
 	  lastTouch = 0, gotfirst = false, released = false;
-	  autoPadding = 5;
+	  Props.autoPadding = 5;
 	  lockout = false;
 	  touch = 0;
 	  setBackColor(0x0);
@@ -376,16 +437,16 @@ class Circle : public Base
 	
     void Coords(int x, int y, int radius)
     {
-      X = x;
-      Y = y;
-      Radius = radius;
+      Props.x = x;
+      Props.y = y;
+      Props.radius = radius;
     }
 
     void Colors(uint16_t c1, uint16_t c2, bool fill)
     {
-      C1 = c1;
-      C2 = c2;
-      Fill = fill;
+      Props.C1 = c1;
+      Props.C2 = c2;
+      Props.Fill = fill;
     }
 
     void Colors(uint16_t color, bool fill)
@@ -395,16 +456,16 @@ class Circle : public Base
 
     void Padding(byte padding = 0, uint16_t padColor = WHITE)
     {
-      _padding = padding;
-      PadColor = padColor;
+      Props.PaddingSize = padding;
+      Props.PadColor = padColor;
     }
 
     void Text(char * PText, char * NPText, uint16_t Tcolor, byte fontSize)
     {
       pText  = PText;
       npText = NPText;
-      FontSize = fontSize;
-      tColor = Tcolor;
+      Props.FontSize = fontSize;
+      Props.tColor = Tcolor;
     }
 
     void Text(char * PText, uint16_t Tcolor, byte fontSize)
@@ -416,8 +477,8 @@ class Circle : public Base
     {
       hText  = HText;
       fText = FText;
-      HFFontSize = fontSize;
-      HFcolor = color;
+      Props.HFFontSize = fontSize;
+      Props.HFcolor = color;
     }
 
     void HeaderText(char * HText, uint16_t color, byte fontSize)
@@ -435,29 +496,29 @@ class Circle : public Base
 	  //Save_MainColor;
       if (State != lastState)
       {
-	    if(Radius == AUTO)
-	      Radius = max(strlen(pText),strlen(npText))*(3*(FontSize+1)) + autoPadding;
+	    if(Props.radius == AUTO)
+	      Props.radius = max(strlen(pText),strlen(npText))*(3*(Props.FontSize+1)) + Props.autoPadding;
 	  
-        if (_padding > 0)
+        if (Props.PaddingSize > 0)
         {
           if (!locked)
           {
-            Fill ? _Disp->fillCircle(X, Y, Radius, PadColor) : _Disp->drawCircle(X, Y, Radius, PadColor);
+            Props.Fill ? _Disp->fillCircle(Props.x, Props.y, Props.radius, Props.PadColor) : _Disp->drawCircle(Props.x, Props.y, Props.radius, Props.PadColor);
 
             locked = true;
           }
 
-          Fill ? _Disp->fillCircle(X, Y, Radius - _padding, (State ? C1 : C2)) : _Disp->drawCircle(X, Y, Radius - _padding, (State ? C1 : C2));
+          Props.Fill ? _Disp->fillCircle(Props.x, Props.y, Props.radius - Props.PaddingSize, (State ? Props.C1 : Props.C2)) : _Disp->drawCircle(Props.x, Props.y, Props.radius - Props.PaddingSize, (State ? Props.C1 : Props.C2));
         }
         else
         {
-          Fill ? _Disp->fillCircle(X, Y, Radius, (State ? C1 : C2)) : _Disp->drawCircle(X, Y, Radius, (State ? C1 : C2));
+          Props.Fill ? _Disp->fillCircle(Props.x, Props.y, Props.radius, (State ? Props.C1 : Props.C2)) : _Disp->drawCircle(Props.x, Props.y, Props.radius, (State ? Props.C1 : Props.C2));
         }
 
         lastState = State;
         
-		if(Fill)
-		  setBackColor(State ? C1 : C2);
+		if(Props.Fill)
+		  setBackColor(State ? Props.C1 : Props.C2);
 		  
         drawText(TE, State);
       }
@@ -478,27 +539,27 @@ class Circle : public Base
         byte strl = strlen(pText);
         byte strl_2 = strlen(npText);
 		  
-        if (C1 == C2)
-		  _Disp->setTextColor(((tColor != C1) ? tColor : ~tColor), getBackColor());
+        if (Props.C1 == Props.C2)
+		  _Disp->setTextColor(((Props.tColor != Props.C1) ? Props.tColor : ~Props.tColor), getBackColor());
           // Show the text color
         else
         {
           if (Button)
-            _Disp->setTextColor(((tColor != C1) ? tColor : ~tColor), getBackColor());
+            _Disp->setTextColor(((Props.tColor != Props.C1) ? Props.tColor : ~Props.tColor), getBackColor());
           else
-            _Disp->setTextColor(((tColor != C2) ? tColor : ~tColor), getBackColor());
+            _Disp->setTextColor(((Props.tColor != Props.C2) ? Props.tColor : ~Props.tColor), getBackColor());
         }
-		if (FontSize) //big font
+		if (Props.FontSize) //big font
 		{
 		  _Disp->setTextSize(2);
 		  if (Button)
 		  {
-		    _Disp->setCursor(X - (strl * 6), Y - 8);
+		    _Disp->setCursor(Props.x - (strl * 6), Props.y - 8);
 			_Disp->print(pText); //print the string in the center of the button. Big font is 16x16
 		  }
 		  else
 		  {
-		    _Disp->setCursor(X - (strl_2 * 6), Y - 8);
+		    _Disp->setCursor(Props.x - (strl_2 * 6), Props.y - 8);
 			_Disp->print(npText);
 		  }
 		}
@@ -507,26 +568,26 @@ class Circle : public Base
 		  _Disp->setTextSize(1);
 		  if (Button)
 		  {
-		    _Disp->setCursor(X - (strl * 3), Y - 3);
+		    _Disp->setCursor(Props.x - (strl * 3), Props.y - 3);
 			_Disp->print(pText); 
 		  }
 		  else
 		  {
-		    _Disp->setCursor(X - (strl_2 * 3), Y - 3);
+		    _Disp->setCursor(Props.x - (strl_2 * 3), Props.y - 3);
 			_Disp->print(npText);
 		  }
 		}
 		
-        _Disp->setTextColor(HFcolor, getBackColor());
-        _Disp->setTextSize(HFFontSize ? 2 : 1);
+        _Disp->setTextColor(Props.HFcolor, getBackColor());
+        _Disp->setTextSize(Props.HFFontSize ? 2 : 1);
         if (strcmp(hText, " "))
 		{
-		  _Disp->setCursor(X - strlen(hText) * (HFFontSize ? 5 : 2.5f), Y - 20);
+		  _Disp->setCursor(Props.x - strlen(hText) * (Props.HFFontSize ? 5 : 2.5f), Props.y - 20);
           _Disp->print(hText);
 		}
         if (strcmp(fText, " "))
 		{
-		  _Disp->setCursor(X - strlen(fText) * (HFFontSize ? 5 : 2.5f), Y+Radius + 5);
+		  _Disp->setCursor(Props.x - strlen(fText) * (Props.HFFontSize ? 5 : 2.5f), Props.y+Props.radius + 5);
           _Disp->print(fText);
 		}
       }
@@ -561,7 +622,7 @@ class Circle : public Base
 			y = _Touch->getY();	
 			break;
 		}
-		return (IsWithin(((x - X)*(x - X)) + ((y - Y)*(y - Y)), 0, (Radius * Radius)));
+		return (IsWithin(((x - Props.x)*(x - Props.x)) + ((y - Props.y)*(y - Props.y)), 0, (Props.radius * Props.radius)));
 	  }
 	  else 
 	    return false;
@@ -659,21 +720,57 @@ class Circle : public Base
     {
       State = S;
     }
+	
+	byte getState()
+	{
+	  return this->State;
+	}
 
     void Unlock()
     {
       locked = false;
     }
 
+	uint16_t getButtonPressedColor()
+	{
+	  return Props.C1;
+	}
+	
+	uint16_t getButtonReleasedColor()
+	{
+	  return Props.C2;
+	}
+	
+	uint16_t getButtonTextColor()
+	{
+	  return Props.tColor;
+	}
+	
+	uint16_t getButtonPaddingColor()
+	{
+	  return Props.PadColor;
+	}
+	
+	uint16_t getButtonHeadFootColor()
+	{
+	  return Props.HFcolor;
+	}
+	
+	void getText(char* text)
+	{
+	  strcpy(text, (getState()? pText : npText));
+	}
+	
+	Properties getButtonProperties()
+	{
+	  return Props;
+	}
+	
   private:
-    int X, Y, Radius;
-    uint16_t C1, C2, PadColor, tColor, HFcolor;
 	uint32_t BGCOLOR;
-    bool Fill;
     bool Lock, State, lastState;
     bool locked;
     char *pText, *npText, *hText, *fText;
-    byte _padding, FontSize, HFFontSize, autoPadding;
 	byte lastTouch, gotfirst, released;
 	unsigned long B_current_time;
     bool lockout, touch;
@@ -1022,7 +1119,12 @@ class Triangle : public Base
       State = S;
       //this->Draw();
     }
-
+    
+	byte getState()
+	{
+	  return this->State;
+	}
+	
     void Polygon(int cx, int cy, int sides, int diameter, uint16_t color, bool fill = 0, float deg = 0)
     {
 	  //Save_MainColor;
@@ -1057,6 +1159,31 @@ class Triangle : public Base
         }
 	  //Restore_MainColor;
     }
+	
+	uint16_t getButtonPressedColor()
+	{
+	  return C1;
+	}
+	
+	uint16_t getButtonReleasedColor()
+	{
+	  return C2;
+	}
+	
+	uint16_t getButtonTextColor()
+	{
+	  return tColor;
+	}
+	
+	uint16_t getButtonPaddingColor()
+	{
+	  return PadColor;
+	}
+	
+	uint16_t getButtonHeadFootColor()
+	{
+	  return HFcolor;
+	}
 
   private:
     int X, Y, _Base, Deg;
@@ -1159,6 +1286,19 @@ class Slider : public Base
     Base *_base;
 
   public:
+    struct Properties
+	{
+	  int x;
+	  int y;
+	  int width;
+	  int height;
+	  int x2;
+	  int y2;
+	  byte PaddingSize;//1
+      word C1, C2, PadColor;//12
+      bool Round, Fill, Direction;//3
+	}Props;
+	
     Slider(Base * B, bool _o) : _base(B), orient(_o)
     {
       _Disp = _base->getDisplay();
@@ -1176,23 +1316,26 @@ class Slider : public Base
 
     void Coords(int x1, int y1, int x2, int y2)
     {
-      X1 = x1;
-      Y1 = y1;
-      X2 = x2;
-      Y2 = y2;
+      Props.x = x1;
+      Props.y = y1;
+      Props.x2 = x2;
+      Props.y2 = y2;
+	  
+	  Props.width = x2-x1;
+	  Props.height = y2-y1;
     }
 
     void Colors(uint16_t c1, uint16_t c2, bool round, bool fill)
     {
-      C1 = c1;
-      C2 = c2;
-      Round = round;
-      Fill = fill;
+      Props.C1 = c1;
+      Props.C2 = c2;
+      Props.Round = round;
+      Props.Fill = fill;
     }
 
     void SetDirection(bool Dir)
     {
-      Direction = Dir;
+      Props.Direction = Dir;
     }
 
     int getTouchState()
@@ -1223,7 +1366,7 @@ class Slider : public Base
 			break;
 		}
 
-      if ((x >= X1) && (x <= X2) && (y >= Y1) && (y <= Y2))
+      if ((x >= Props.x) && (x <= Props.x2) && (y >= Props.y) && (y <= Props.y2))
         return orient ? y : x;
       else
         return -1;
@@ -1232,28 +1375,28 @@ class Slider : public Base
     void Draw()
     {
 	  //Save_MainColor;
-      if (_padding > 0)
+      if (Props.PaddingSize > 0)
       {
         if (!locked)
         {
-          if (Fill)
-            (Round ? _Disp->fillRoundRect(X1, Y1, X2-X1, Y2-Y1,2, PadColor) : _Disp->fillRect(X1, Y1, X2-X1, Y2-Y1, PadColor));
+          if (Props.Fill)
+            (Props.Round ? _Disp->fillRoundRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y,2, Props.PadColor) : _Disp->fillRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y, Props.PadColor));
           else
-            (Round ? _Disp->drawRoundRect(X1, Y1, X2-X1, Y2-Y1,2, PadColor) : _Disp->drawRect(X1, Y1, X2-X1, Y2-Y1, PadColor));
+            (Props.Round ? _Disp->drawRoundRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y,2, Props.PadColor) : _Disp->drawRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y, Props.PadColor));
           locked = true;
         }
 
-        if (Fill)
-          (Round ? _Disp->fillRoundRect(X1 + _padding, Y1 + _padding, X2-X1 - _padding, Y2-Y1 - _padding,2, C2) : _Disp->fillRect(X1 + _padding, Y1 + _padding, X2-X1 - _padding, Y2-Y1 - _padding, C2));
+        if (Props.Fill)
+          (Props.Round ? _Disp->fillRoundRect(Props.x + Props.PaddingSize, Props.y + Props.PaddingSize, Props.x2-Props.x - Props.PaddingSize, Props.y2-Props.y - Props.PaddingSize,2, Props.C2) : _Disp->fillRect(Props.x + Props.PaddingSize, Props.y + Props.PaddingSize, Props.x2-Props.x - Props.PaddingSize, Props.y2-Props.y - Props.PaddingSize, Props.C2));
         else
-          (Round ? _Disp->drawRoundRect(X1 + _padding, Y1 + _padding, X2-X1 - _padding, Y2-Y1 - _padding, 2,C2) : _Disp->drawRect(X1 + _padding, Y1 + _padding, X2-X1 - _padding, Y2-Y1 - _padding, C2));
+          (Props.Round ? _Disp->drawRoundRect(Props.x + Props.PaddingSize, Props.y + Props.PaddingSize, Props.x2-Props.x - Props.PaddingSize, Props.y2-Props.y - Props.PaddingSize, 2,Props.C2) : _Disp->drawRect(Props.x + Props.PaddingSize, Props.y + Props.PaddingSize, Props.x2-Props.x - Props.PaddingSize, Props.y2-Props.y - Props.PaddingSize, Props.C2));
       }
       else
       {
-        if (Fill)
-          (Round ? _Disp->fillRoundRect(X1, Y1, X2-X1, Y2-Y1,2, C2) : _Disp->fillRect(X1, Y1, X2-X1, Y2-Y1, C2));
+        if (Props.Fill)
+          (Props.Round ? _Disp->fillRoundRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y,2, Props.C2) : _Disp->fillRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y, Props.C2));
         else
-          (Round ? _Disp->drawRoundRect(X1, Y1, X2-X1, Y2-Y1,2, C2) : _Disp->drawRect(X1, Y1, X2-X1, Y2-Y1, C2));
+          (Props.Round ? _Disp->drawRoundRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y,2, Props.C2) : _Disp->drawRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y, Props.C2));
       }
 	  //Restore_MainColor;
     }
@@ -1274,52 +1417,52 @@ class Slider : public Base
       {
         if (orient == HORIZONTAL)
         {
-          if (Direction == LTR)
+          if (Props.Direction == LTR)
           {
-            for (int X = X1 + _padding; X <= X2 - _padding; X++)
+            for (int X = Props.x + Props.PaddingSize; X <= Props.x2 - Props.PaddingSize; X++)
             {
-              if ((X % (((X2 - X1) - _padding) / (abs(H - L) / Inc)) != 0) | BarsOff) // (X <= T) &&
+              if ((X % (((Props.x2 - Props.x) - Props.PaddingSize) / (abs(H - L) / Inc)) != 0) | BarsOff) // (X <= T) &&
               {
-                _Disp->drawFastVLine(X, Y1 + _padding, (Y2 - Y1) - _padding * 2, (X <= T) ? C1 : C2);
+                _Disp->drawFastVLine(X, Props.y + Props.PaddingSize, (Props.y2 - Props.y) - Props.PaddingSize * 2, (X <= T) ? Props.C1 : Props.C2);
               }
             }
           }
           else
           {
-            for (int X = X2 - _padding; X >= X1 + _padding; X--)
+            for (int X = Props.x2 - Props.PaddingSize; X >= Props.x + Props.PaddingSize; X--)
             {
-              if ((X % (((X2 - X1) - _padding) / (abs(H - L) / Inc)) != 0) | BarsOff) // (X <= T) &&
+              if ((X % (((Props.x2 - Props.x) - Props.PaddingSize) / (abs(H - L) / Inc)) != 0) | BarsOff) // (X <= T) &&
               {
-                _Disp->drawFastVLine(X, Y1 + _padding, (Y2 - Y1) - _padding * 2, (X >= T) ? C1 : C2);
+                _Disp->drawFastVLine(X, Props.y + Props.PaddingSize, (Props.y2 - Props.y) - Props.PaddingSize * 2, (X >= T) ? Props.C1 : Props.C2);
               }
             }
           }
         }
         else
         {
-          if (Direction == BTT)
+          if (Props.Direction == BTT)
           {
-            for (int Y = Y2 - _padding; Y >= Y1 + _padding; Y--)
+            for (int Y = Props.y2 - Props.PaddingSize; Y >= Props.y + Props.PaddingSize; Y--)
             {
-              if ((Y % (((Y2 - Y1) - _padding) / (abs(H - L) / Inc)) != 0) | BarsOff) // (Y >= T) &&
+              if ((Y % (((Props.y2 - Props.y) - Props.PaddingSize) / (abs(H - L) / Inc)) != 0) | BarsOff) // (Y >= T) &&
               {
-                _Disp->drawFastHLine(X1 + _padding, Y, (X2 - X1) - _padding * 2, (Y >= T) ? C1 : C2);
+                _Disp->drawFastHLine(Props.x + Props.PaddingSize, Y, (Props.x2 - Props.x) - Props.PaddingSize * 2, (Y >= T) ? Props.C1 : Props.C2);
               }
             }
           }
           else
           {
-            for (int Y = Y1 + _padding; Y <= Y2 - _padding; Y++)
+            for (int Y = Props.y + Props.PaddingSize; Y <= Props.y2 - Props.PaddingSize; Y++)
             {
-              if ((Y % (((Y2 - Y1) - _padding) / (abs(H - L) / Inc)) != 0) | BarsOff) // (Y >= T) &&
+              if ((Y % (((Props.y2 - Props.y) - Props.PaddingSize) / (abs(H - L) / Inc)) != 0) | BarsOff) // (Y >= T) &&
               {
-                _Disp->drawFastHLine(X1 + _padding, Y, (X2 - X1) - _padding * 2, (Y <= T) ? C1 : C2);
+                _Disp->drawFastHLine(Props.x + Props.PaddingSize, Y, (Props.x2 - Props.x) - Props.PaddingSize * 2, (Y <= T) ? Props.C1 : Props.C2);
               }
             }
           }
         }
         if (T > -1)
-          Out = Map(T, (orient ? Y1 : X1), (orient ? Y2 : X2), H, L - 1);
+          Out = Map(T, (orient ? Props.y : Props.x), (orient ? Props.y2 : Props.x2), H, L - 1);
       }
 	  //Restore_MainColor;
       return Out;
@@ -1328,20 +1471,20 @@ class Slider : public Base
     void SetStartingValue(long SV)
     {
       if (SV == -1)
-        T = (orient ? Y2 : X2);
+        T = (orient ? Props.y2 : Props.x2);
       else
       {
         if (SV > H) SV = H;
         if (SV < L) SV = L;
-        T = Map(SV, L, H, (orient ? Y2 : X2), (orient ? Y1 : X1));
+        T = Map(SV, L, H, (orient ? Props.y2 : Props.x2), (orient ? Props.y : Props.x));
       }
 
     }
 
     void Padding(byte padding = 0, uint16_t padColor = WHITE, bool barsoff = 0)
     {
-      _padding = padding;
-      PadColor = padColor;
+      Props.PaddingSize = padding;
+      Props.PadColor = padColor;
       BarsOff = barsoff;
     }
 
@@ -1358,10 +1501,10 @@ class Slider : public Base
         Value = Val;
       else
       {
-        int SL = (orient ? Y1 : X1);
-        int SH = (orient ? Y2 : X2);
+        int SL = (orient ? Props.y : Props.x);
+        int SH = (orient ? Props.y2 : Props.x2);
 
-        if (Direction == RTL || Direction == BTT)
+        if (Props.Direction == RTL || Props.Direction == BTT)
           Swap(SL, SH);
 
         Value = Map(Val, L, H, SL, SH);
@@ -1378,11 +1521,26 @@ class Slider : public Base
       locked = false;
     }
 
+	uint16_t getButtonPressedColor()
+	{
+	  return Props.C1;
+	}
+	
+	uint16_t getButtonReleasedColor()
+	{
+	  return Props.C2;
+	}
+	
+	uint16_t getButtonPaddingColor()
+	{
+	  return Props.PadColor;
+	}
+	
+	Properties getButtonProperties()
+	{
+	  return Props;
+	}
   private:
-    int X1, Y1, X2, Y2; //16
-    byte _padding;//1
-    uint16_t C1, C2, PadColor;//12
-    bool Round, Fill, Direction;//3
     bool locked;//1
     bool State;//1
     bool BarsOff;
@@ -1400,6 +1558,17 @@ class Swipe : public Base
     Base *_base;
 
   public:
+  
+    struct Properties
+	{
+	  int x;
+	  int y;
+	  int width;
+	  int height;
+	  int x2;
+	  int y2;
+	}Props;
+	
     Swipe(Base * B): _base(B)
     {
       _Disp = _base->getDisplay();
@@ -1411,10 +1580,13 @@ class Swipe : public Base
 	
     void Coords(int x1, int y1, int x2, int y2)
     {
-      X1 = x1;
-      Y1 = y1;
-      X2 = x2;
-      Y2 = y2;
+      Props.x = x1;
+      Props.y = y1;
+      Props.x2 = x2;
+      Props.y2 = y2;
+	  
+	  Props.width = x2-x1;
+	  Props.height = y2-y1;
     }
 	
 	void setLimits(byte X = 10, byte Y = 10)
@@ -1427,7 +1599,7 @@ class Swipe : public Base
     {
 	  //Save_MainColor;
 	  if(En)
-        (type? _Disp->drawRoundRect(X1, Y1, X2-X1, Y2-Y1, 2, color) : _Disp->drawRect(X1, Y1, X2-X1, Y2-Y1, color));
+        (type? _Disp->drawRoundRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y, 2, color) : _Disp->drawRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y, color));
 	  //Restore_MainColor;
     }
 
@@ -1460,7 +1632,7 @@ class Swipe : public Base
 			y = _Touch->getY();	
 			break;
 		}
-		return (IsWithin(x, X1, X2) & IsWithin(y, Y1, Y2));
+		return (IsWithin(x, Props.x, Props.x2) & IsWithin(y, Props.y, Props.y2));
 	  }
 	  else
 	    return false;
@@ -1507,13 +1679,13 @@ class Swipe : public Base
           else if ((STouchY > FTouchY) && (STouchX > FTouchX)) Direction = Swipe_downRight; // downRight
         }
         //get a swipe direction for the Y axis
-        else if ((abs(STouchY - FTouchY) >= lenght) && IsWithin(FTouchX, X1 + Xlimit, X2 - Xlimit))
+        else if ((abs(STouchY - FTouchY) >= lenght) && IsWithin(FTouchX, Props.x + Xlimit, Props.x2 - Xlimit))
         {
           if (STouchY < FTouchY) Direction = Swipe_up; // up
           else if (STouchY > FTouchY) Direction = Swipe_down; // down
         }
         //get a swipe direction for X axis
-        else if ((abs(STouchX - FTouchX) >= lenght) && IsWithin(FTouchY, Y1 + Ylimit, Y2 - Ylimit))
+        else if ((abs(STouchX - FTouchX) >= lenght) && IsWithin(FTouchY, Props.y + Ylimit, Props.y2 - Ylimit))
         {
           if (STouchX < FTouchX) Direction = Swipe_left; // left
           else if (STouchX > FTouchX) Direction = Swipe_right; // right
@@ -1527,9 +1699,13 @@ class Swipe : public Base
       else
         return Direction;
     }
-
+    
+	Properties getButtonProperties()
+	{
+	  return Props;
+	}
+	
   private:
-    int X1, Y1, X2, Y2;
 	byte Xlimit, Ylimit;
 };
 
@@ -1764,6 +1940,7 @@ class CustomButton : public Base
 	  this->Draw();
 	  return State;
 	}
+	
     void Draw()
     {
 	  //Save_MainColor;
@@ -1804,6 +1981,21 @@ class CustomButton : public Base
       State = S;
     }
 	
+	byte getState()
+	{
+	  return this->State;
+	}
+	
+	int getButtonPressedColor()
+	{
+	  return C1;
+	}
+	
+	int getButtonReleasedColor()
+	{
+	  return C2;
+	}
+	
   private:
     uint16_t C1, C2;
     bool Fill, State, lastState, Lock;
@@ -1815,8 +2007,6 @@ class CustomButton : public Base
 #if 1
 class MobileKeyboard : public Base
 {
-#define BUF 27
-
   protected:
     TFT_Display *_Disp;
     TOUCH *_Touch;
@@ -1827,6 +2017,11 @@ class MobileKeyboard : public Base
     {
       _Disp = _base->getDisplay();
       _Touch = _base->getTouch();
+	  byte Dir = _Disp->getRotation();
+	  if((Dir == 1) || (Dir == 3))
+	    BUF = 27;
+	  else
+	    BUF = 18;
     }
 	
 	~MobileKeyboard(){ }
@@ -1839,70 +2034,21 @@ class MobileKeyboard : public Base
 	  Fill = fill;
 	}
 	
-    void SetupMobileKB(int X, int Y, float SX = 320, float SY = 115)
+    void SetupMobileKB(int X, int Y, float SX = -1, float SY = -1)
     {
-      if ((_Disp->getRotation() == 1) || (_Disp->getRotation() == 3))//LANDSCAPE
-      {
-        // all values are based off of SX and SY
-        ScaleX = SX = ((SX > 320) ? SX : 320); // minimum scaleX is 320
-        ScaleY = SY = ((SY > 115) ? SY : 115); // minimum scaleY is 115
-      }
-      else
-      {
-        // all values are based off of SX and SY
-        ScaleX = SX = ((SX > 300) ? SX : 300); // minimum scaleX is 320
-        ScaleY = SY = ((SY > 110) ? SY : 110); // minimum scaleY is 115
-      }
-
-      RCV_locked = false;
-      RCV_cnt = 0;
-      //KB_Scale = Scale;
-
-      if ((_Disp->getRotation() == 1) || (_Disp->getRotation() == 3))
-      {
-        _FONT = Big;
-        XoffSet = X + 0.056 * SX;
-        YoffSet = Y ;
-        TxtoffSet = 1;
-        SEND.x1 = XoffSet + (0.69 * SX); SEND.y1 = YoffSet + (0.826 * SY); SEND.x2 = XoffSet + (0.912 * SX); SEND.y2 = YoffSet + SY;
-        BSP.x1 = XoffSet + 0.73 * SX; BSP.y1 = YoffSet + 0.58 * SY; BSP.x2 = XoffSet + 0.912 * SX; BSP.y2 = YoffSet + 0.756 * SY;
-        CAPS.x1 = XoffSet - 0.04 * SX; CAPS.y1 = YoffSet + 0.58 * SY; CAPS.x2 = XoffSet + 0.0687 * SX; CAPS.y2 = YoffSet + 0.756 * SY;
-        SPACE.x1 = XoffSet + 0.25 * SX; SPACE.y1 = YoffSet + 0.826 * SY; SPACE.x2 = XoffSet + 0.625 * SX; SPACE.y2 = YoffSet + SY;
-        NUM.x1 = XoffSet - 0.04 * SX; NUM.y1 = YoffSet + 0.826 * SY; NUM.x2 = XoffSet + 0.178 * SX; NUM.y2 = YoffSet + SY;
-        Type = 0;
-        _symbol = 0;
-      }
-      else
-      {
-        _FONT = Small;
-        XoffSet = X + 0.0813 * SX;
-        YoffSet = Y - 5;
-
-        TxtoffSet = 10;
-        SEND.x1 = XoffSet + 0.4813 * SX; SEND.y1 = YoffSet+0.6087 * SY; SEND.x2 = XoffSet + 0.6375 * SX; SEND.y2 = YoffSet+0.7391*SY;
-        BSP.x1 = XoffSet + 0.5125* SX; BSP.y1 = YoffSet+0.4435 * SY; BSP.x2 = XoffSet + 0.6375 * SX; BSP.y2 = YoffSet+0.5739 * SY;
-        CAPS.x1 = XoffSet - 0.0656 * SX; CAPS.y1 = YoffSet+0.4435 * SY; CAPS.x2 = XoffSet - 0.0031 * SX; CAPS.y2 = YoffSet+0.5739 * SY;
-        SPACE.x1 = XoffSet + 0.1844 * SX; SPACE.y1 = YoffSet+0.6087 * SY; SPACE.x2 = XoffSet + 0.3875 * SX; SPACE.y2 = YoffSet+0.7391*SY;
-        NUM.x1 = XoffSet - 0.0656 * SX; NUM.y1 = YoffSet+0.6087 * SY; NUM.x2 = XoffSet + 0.0906 * SX; NUM.y2 = YoffSet+0.7391*SY;
-        Type = 0;
-        _symbol = 0;
-      }
-      //Save_MainColor;
-
-      _Disp->fillRect(0, YoffSet, SX, SY, 0x0);
-      _Disp->setTextColor(WHITE);
-      _Disp->setTextSize(1);
-	  _Disp->setCursor( XoffSet - 18, YoffSet + TxtoffSet);
-      _Disp->print(">>");
-
-      make_Mobile_Keyboard(Mobile_KB);
-      clearMSG();
-
-      //Restore_MainColor;
+	  // don't need this anymore
     }
     
-	
 	void make_Mobile_Keyboard(const char type[][13])
+	{
+	  byte Dir = _Disp->getRotation();
+	  if((Dir == 1) || (Dir == 3))
+	    make_Mobile_Keyboard_L(type);
+      else  
+	    make_Mobile_Keyboard_P(type);
+	}
+	
+	void make_Mobile_Keyboard_L(const char type[][13])
 	{
 	  _Disp->setTextSize(2);
 	  _Disp->setTextColor(Textcolor, Backgnd);
@@ -1943,6 +2089,48 @@ class MobileKeyboard : public Base
 	  _Disp->setCursor(105, 195);
 	  _Disp->print(F("SPACE BAR"));
 	}
+	
+	void make_Mobile_Keyboard_P(const char type[][13])
+	{
+	  _Disp->setTextSize(2);
+	  _Disp->setTextColor(Textcolor, Backgnd);
+	  for (int y = 0; y < 3; y++)
+	  {
+		int ShiftRight = 10 * pgm_read_byte(&(type[y][0]));
+		for (int x = 3; x < 13; x++)
+		{
+		  if (x >= pgm_read_byte(&(type[y][1]))) break;
+
+		  drawButton(8 + (23 * (x - 3)) + ShiftRight, 200 + (30 * y), 20,25); // this will draw the button on the screen by so many pixels
+		  _Disp->setCursor(12 + (23 * (x - 3)) + ShiftRight, 205 + (30 * y));
+		  _Disp->print(char(pgm_read_byte(&(type[y][x]))));
+		}
+	  }
+	  //ShiftKey
+	  drawButton(5, 260, 30, 25);
+	  _Disp->setCursor(15, 265);
+	  _Disp->print(F("^"));
+
+	  //Special Characters
+	  drawButton(5, 290, 30, 25);
+	  _Disp->setCursor(9, 200 + 95);
+	  _Disp->print(F("SP"));
+
+	  //BackSpace
+	  drawButton(200, 260, 30, 25);
+	  _Disp->setCursor(204, 200 + 65);
+	  _Disp->print(F("BS"));
+
+	  //Return
+	  drawButton(200, 290, 30, 25);
+	  _Disp->setCursor(204, 200 + 95);
+	  _Disp->print(F("RT"));
+
+	  //Spacebar
+	  drawButton(47, 290, 140, 25);
+	  _Disp->setCursor(65, 200 + 95);
+	  _Disp->print(F("SPACE BAR"));
+	}
 
 	void drawButton(int x, int y, int w, int h)
 	{
@@ -1958,10 +2146,19 @@ class MobileKeyboard : public Base
 	
     void clearMSG()
     {
-      memset(MSG, ' ', sizeof(MSG));
+      memset(MSG, ' ', BUF);
     }
 
-	char * Mobile_KeyBoard(char * textBuffer)
+	char * Mobile_KeyBoard(char * myMSG, uint16_t color = 0xFFFF)
+	{
+	  byte Dir = _Disp->getRotation();
+	  if((Dir == 1) || (Dir == 3))
+	    Mobile_KeyBoard_L(myMSG, color);
+	  else 
+	    Mobile_KeyBoard_P(myMSG, color);
+	}
+	
+	char * Mobile_KeyBoard_L(char * myMSG, uint16_t color = 0xFFFF)
 	{
 	  char key = 0;
 	  static bool shift = false, special = false, back = false, lastSp = false, lastSh = false;
@@ -1990,18 +2187,18 @@ class MobileKeyboard : public Base
 			if (shift)
 			{
 			  _Disp->fillScreen(Backgnd);
-			  make_Mobile_Keyboard(Mobile_SymKeys);
+			  make_Mobile_Keyboard_L(Mobile_SymKeys);
 			}
 			else
 			{
 			  _Disp->fillScreen(Backgnd);
-			  make_Mobile_Keyboard(Mobile_NumKeys);
+			  make_Mobile_Keyboard_L(Mobile_NumKeys);
 			}
 		  }
 		  else
 		  {
 			_Disp->fillScreen(Backgnd);
-			make_Mobile_Keyboard(Mobile_KB);
+			make_Mobile_Keyboard_L(Mobile_KB);
 			_Disp->setTextColor(Textcolor, Backgnd);
 		  }
 
@@ -2019,7 +2216,7 @@ class MobileKeyboard : public Base
 			_Disp->setTextColor((Backgnd != 0xFFFF? 0xFFFF : 0), Backgnd);
 
 		  _Disp->setCursor(27, 168);
-		  _Disp->print('^');
+		  _Disp->print(F("^"));
 
 		  lastSh = shift;
 
@@ -2053,12 +2250,12 @@ class MobileKeyboard : public Base
 				if (special)
 				{
 				  if (shift)
-					textBuffer[bufIndex] = pgm_read_byte(&(Mobile_SymKeys[y][x]));
+					MSG[bufIndex] = pgm_read_byte(&(Mobile_SymKeys[y][x]));
 				  else
-					textBuffer[bufIndex] = pgm_read_byte(&(Mobile_NumKeys[y][x]));
+					MSG[bufIndex] = pgm_read_byte(&(Mobile_NumKeys[y][x]));
 				}
 				else
-				  textBuffer[bufIndex] = (pgm_read_byte(&(Mobile_KB[y][x])) + (shift ? 0 : ('a' - 'A')));
+				  MSG[bufIndex] = (pgm_read_byte(&(Mobile_KB[y][x])) + (shift ? 0 : ('a' - 'A')));
 
 				bufIndex++;
 			  }
@@ -2070,7 +2267,7 @@ class MobileKeyboard : public Base
 		//Spacebar
 		if (TouchButton(60, 190, 200, 25))
 		{
-		  textBuffer[bufIndex++] = ' ';
+		  MSG[bufIndex++] = ' ';
 		  delay(200);
 		}
 
@@ -2079,7 +2276,7 @@ class MobileKeyboard : public Base
 		{
 		  if ((bufIndex) > 0)
 			bufIndex--;
-		  textBuffer[bufIndex] = 0;
+		  MSG[bufIndex] = 0;
 		  _Disp->setTextColor(1, Backgnd);
 		  _Disp->setCursor(15, 80);
 		  _Disp->print(F("                          "));
@@ -2089,21 +2286,168 @@ class MobileKeyboard : public Base
 		//Return
 		if (TouchButton(270, 190, 35, 25))
 		{
-		  Serial.println(textBuffer);
-		  while (bufIndex > 0)
-		  {
-			bufIndex--;
-			textBuffer[bufIndex] = 0;
-		  }
+		  Serial.println(MSG);
+		  MSG[bufIndex] = '\0';
+		  
+		  strcpy(myMSG, MSG);
+		  clearMSG();
+		  bufIndex = 0;
 
 		  _Disp->setTextColor(1, Backgnd);
 		  _Disp->setCursor(15, 80);
 		  _Disp->print(F("                         "));
 		}
 	  }
-	  _Disp->setTextColor(Textcolor, Backgnd);
+	  _Disp->setTextColor(color, Backgnd);
 	  _Disp->setCursor(15, 80);
-	  _Disp->print(textBuffer);
+	  MSG[bufIndex] = '\0';
+	  _Disp->print(MSG);
+	}
+	
+	char * Mobile_KeyBoard_P(char * myMSG, uint16_t color = 0xFFFF)
+	{
+	  char key = 0;
+	  static bool shift = false, special = false, back = false, lastSp = false, lastSh = false;
+	  static char bufIndex = 0;
+
+	  if (_Touch->dataAvailable())
+	  {
+		//ShiftKey
+		if (TouchButton(5, 260, 30, 25))
+		{
+		  shift = !shift;
+		  delay(200);
+		}
+
+		//Special Characters
+		if (TouchButton(5, 290, 30, 25))
+		{
+		  special = !special;
+		  delay(200);
+		}
+
+		if (special != lastSp || shift != lastSh)
+		{
+		  if (special)
+		  {
+			if (shift)
+			{
+			  _Disp->fillScreen(Backgnd);
+			  make_Mobile_Keyboard_P(Mobile_SymKeys);
+			}
+			else
+			{
+			  _Disp->fillScreen(Backgnd);
+			  make_Mobile_Keyboard_P(Mobile_NumKeys);
+			}
+		  }
+		  else
+		  {
+			_Disp->fillScreen(Backgnd);
+			make_Mobile_Keyboard_P(Mobile_KB);
+			_Disp->setTextColor(0xffff, Backgnd);
+		  }
+
+		  if (special)
+			_Disp->setTextColor(0x0FF0, Backgnd);
+		  else
+			_Disp->setTextColor(Textcolor, Backgnd);
+
+		  _Disp->setCursor(9, 295);
+		  _Disp->print(F("SP"));
+
+		  if (shift)
+			_Disp->setTextColor(0x0FF0, Backgnd);
+		  else
+			_Disp->setTextColor(Textcolor, Backgnd);
+
+		  _Disp->setCursor(15, 265);
+		  _Disp->print(F("^"));
+
+		  lastSh = shift;
+
+		  lastSp = special;
+		  lastSh = shift;
+		}
+
+		for (int y = 0; y < 3; y++)
+		{
+		  int ShiftRight;
+		  if (special)
+		  {
+			if (shift)
+			  ShiftRight = 10 * pgm_read_byte(&(Mobile_SymKeys[y][0]));
+			else
+			  ShiftRight = 10 * pgm_read_byte(&(Mobile_NumKeys[y][0]));
+		  }
+		  else
+			ShiftRight = 10 * pgm_read_byte(&(Mobile_KB[y][0]));
+
+		  for (int x = 3; x < 13; x++)
+		  {
+			if (x >=  (special ? (shift ? pgm_read_byte(&(Mobile_SymKeys[y][1])) : pgm_read_byte(&(Mobile_NumKeys[y][1]))) : pgm_read_byte(&(Mobile_KB[y][1])) )) 
+			  break;
+
+			if (TouchButton(8 + (23 * (x - 3)) + ShiftRight, 200 + (30 * y), 20,25)) // this will draw the button on the screen by so many pixels
+			{
+			  if (bufIndex < (BUF - 1))
+			  {
+				delay(200);
+
+				if (special)
+				{
+				  if (shift)
+					MSG[bufIndex] = pgm_read_byte(&(Mobile_SymKeys[y][x]));
+				  else
+					MSG[bufIndex] = pgm_read_byte(&(Mobile_NumKeys[y][x]));
+				}
+				else
+				  MSG[bufIndex] = (pgm_read_byte(&(Mobile_KB[y][x])) + (shift ? 0 : ('a' - 'A')));
+
+				bufIndex++;
+			  }
+			  break;
+			}
+		  }
+		}
+
+		//Spacebar
+		if (TouchButton(47, 290, 140, 25))
+		{
+		  MSG[bufIndex++] = ' ';
+		  delay(200);
+		}
+
+		//BackSpace
+		if (TouchButton(200, 260, 30, 25))
+		{
+		  if ((bufIndex) > 0)
+			bufIndex--;
+		  MSG[bufIndex] = 0;
+		  _Disp->setTextColor(0, Backgnd);
+		  _Disp->setCursor(15, 180);
+		  _Disp->print(F("              "));
+		  delay(200);
+		}
+
+		//Return
+		if (TouchButton(200, 290, 30, 25))
+		{
+		  Serial.println(MSG);
+		  MSG[bufIndex] = '\0'; 
+		  strcpy(myMSG, MSG);
+		  
+		  clearMSG();
+          bufIndex = 0;
+		  
+		  _Disp->setTextColor(0, Backgnd);
+		  _Disp->setCursor(15, 180);
+		  _Disp->print(F("              "));
+		}
+	  }
+	  _Disp->setTextColor(color, Backgnd);
+	  _Disp->setCursor(15, 180);
+	  _Disp->print(MSG);
 	}
 
     void ReceiveMsg(int X, int Y, uint16_t color)
@@ -2148,11 +2492,12 @@ class MobileKeyboard : public Base
   private:
     int 	XoffSet, YoffSet, TxtoffSet;
     int		idx;
-    char    MSG[BUF];
-    char    RET_MSG[BUF];
+	byte    BUF;
+    char    MSG[30];
+    char    RET_MSG[30];
     byte 	RCV_cnt;
     bool	RCV_locked;
-    char 	ReceiveMSG[BUF];
+    char 	ReceiveMSG[30];
     byte 	_FONT;
     bool	_TYPE;
     bool	Type, _symbol;
@@ -2161,13 +2506,6 @@ class MobileKeyboard : public Base
     bool    Shift;
 	uint16_t	Textcolor, Backgnd, Boxcolor;
 	bool 	Fill;
-
-    struct {
-      int x1;
-      int y1;
-      int x2;
-      int y2;
-    } SEND, BSP, CAPS, SPACE, NUM;
 
     bool TouchButton(int x1, int y1, int w, int h)
     {

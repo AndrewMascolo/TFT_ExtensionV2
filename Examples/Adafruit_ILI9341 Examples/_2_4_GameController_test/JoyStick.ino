@@ -13,7 +13,7 @@
 #define RSXL 239
 
 #ifdef Core_Ext_h
-#define myMap map<long>
+#define myMap custmap<long>
 #else
 #define myMap map
 #endif

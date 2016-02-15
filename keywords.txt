@@ -24,6 +24,7 @@ Text	KEYWORD2
 Draw	KEYWORD2
 ReDraw	KEYWORD2
 SetState	KEYWORD2
+getState	KEYWORD2
 Polygon	KEYWORD2
 RadioButtons	KEYWORD2
 UnlockRadioButtons	KEYWORD2
@@ -45,6 +46,12 @@ ProgressText	KEYWORD2
 CycleButton	KEYWORD2
 TextRange	KEYWORD2
 ArcDegrees	KEYWORD2
+getButtonPressedColor	KEYWORD2
+getButtonReleasedColor	KEYWORD2
+getButtonTextColor	KEYWORD2
+getButtonPaddingColor	KEYWORD2
+getButtonHeadFootColor	KEYWORD2
+getText	KEYWORD2
 
 Tri_up	LITERAL1
 Tri_down	LITERAL1

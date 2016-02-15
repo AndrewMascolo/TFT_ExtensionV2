@@ -1,6 +1,23 @@
 #ifndef TFT_ExtensionV2_h
 #define TFT_ExtensionV2_h
 
+//Version 2.12
+// Adafruit extension now allows for buttons to be used for any orientation
+// Until Henning Karlsen allows for reversed landscape and portrait orientations, I will hold off on adding that functionality to the UTFT extension.
+// The color PINK was changed to REG_PINK to try and avoid issues with the SD card library.
+// I changed the structure of the buttons attributes by wrapping everything inside a structure that can then be returned from a function. Ex. myButton.getButtonProperties().width;
+
+//Version 2.11
+// Added in the following functions:
+// getBackColor
+// getState
+// getButtonPressedColor		(All button types)
+// getButtonReleasedColor 		(All button types)	
+// getButtonTextColor			(Box and Circle buttons)
+// getButtonPaddingColor		(Box and Circle buttons)
+// getButtonHeadFootColor 		(Box and Circle buttons)
+// getText						(Box and Circle buttons)
+
 // Version 2.10
 // Added new DoubleClick() method to all button types. 
 // Fixed the ReDraw() method to not only reset the button's appearance state, but to redraw it too (makes sense). 
@@ -63,7 +80,7 @@ byte * Font;
 #endif
 
 #if defined Core_Ext_h
-#define Map map<long>
+#define Map custmap<long>
 #else
 #define Map map
 #endif
@@ -120,7 +137,7 @@ byte * Font;
 #define LIGHT_PURPLE 0xC819
 #define PURPLE  0x9019 
 #define DARK_PURPLE 0x600C
-#define PINK 0xF81F
+#define REG_PINK 0xF81F
 #define CYAN    0x07FF
 #define GREY    0x8410
 #define WHITE   0xFFFF
