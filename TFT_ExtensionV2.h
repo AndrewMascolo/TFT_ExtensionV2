@@ -1,6 +1,30 @@
 #ifndef TFT_ExtensionV2_h
 #define TFT_ExtensionV2_h
 
+/*
+The MIT License (MIT)
+
+Copyright (c) 2016 Andrew Mascolo Jr
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 //Version 2.12
 // Adafruit extension now allows for buttons to be used for any orientation
 // Until Henning Karlsen allows for reversed landscape and portrait orientations, I will hold off on adding that functionality to the UTFT extension.
@@ -80,9 +104,9 @@ byte * Font;
 #endif
 
 #if defined Core_Ext_h
-#define Map custmap<long>
+#define TFTE_Map custmap<long>
 #else
-#define Map map
+#define TFTE_Map map
 #endif
 
 
@@ -118,30 +142,33 @@ byte * Font;
 #define OUTSIDE 1
 
 //=====================COLOR_PALLET==========================
-#define BLACK   0x0
-#define LIGHT_RED	0xFD14
-#define RED     0xF800
-#define DARK_RED    0x6000
-#define LIGHT_ORANGE 0xFF52
-#define ORANGE  0xFD00
-#define DARK_ORANGE 0xFA80
-#define LIGHT_YELLOW 0xFFF4
-#define YELLOW  0xD7E0
-#define DARK_YELLOW 0xCE40
-#define LIGHT_GREEN 0xB7F6
-#define GREEN   0x07E0
-#define DARK_GREEN 0x0320
-#define LIGHT_BLUE 0xA51F
-#define BLUE    0x001F
-#define DARK_BLUE 0x000C
-#define LIGHT_PURPLE 0xC819
-#define PURPLE  0x9019 
-#define DARK_PURPLE 0x600C
-#define REG_PINK 0xF81F
-#define CYAN    0x07FF
-#define GREY    0x8410
-#define WHITE   0xFFFF
-#define TRANSPARENT 0xFFFFFFFF
+#define BLACK   		0x0
+#define BROWN 			0x6180
+#define LIGHT_RED		0xFD14
+#define RED     		0xF800
+#define DARK_RED   		0x6000
+#define LIGHT_ORANGE 	0xFF52
+#define ORANGE  		0xFD00
+#define DARK_ORANGE 	0xFA80
+#define LIGHT_YELLOW 	0xFFF4
+#define YELLOW  		0xD7E0
+#define DARK_YELLOW 	0xCE40
+#define LIGHT_GREEN 	0xB7F6
+#define GREEN   		0x07E0
+#define DARK_GREEN 		0x0320
+#define LIGHT_BLUE 		0xA51F
+#define BLUE    		0x001F
+#define DARK_BLUE 		0x000C
+#define LIGHT_PURPLE 	0xC819
+#define PURPLE  		0x9019 
+#define DARK_PURPLE 	0x600C
+#define REG_PINK 		0xF81F
+#define CYAN    		0x07FF
+#define GREY    		0x8410
+#define SILVER 			0xC618
+#define GOLD			0xD566
+#define WHITE   		0xFFFF
+#define TRANSPARENT 	0xFFFFFFFF
 //==================END_OF_COLOR_PALLET======================
 
 #define FILL 1
@@ -247,6 +274,5 @@ class Base
 #include "Utilities/AdaFruit_TFTE_Touchables.h"
 #endif
 //=========================================================
-
 
 #endif

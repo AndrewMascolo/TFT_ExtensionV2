@@ -26,9 +26,9 @@ void drawGrid(struct Canvas canvas, byte cols, byte rows, byte index)
   {
     myGLCD.drawRect
     (
-      (box % cols)*Xspace + canvas.x, 
-      (box / cols)*Yspace + canvas.y, 
-      (box % cols)*Xspace + Xspace + canvas.x, 
+      (box % cols)*Xspace + canvas.x,
+      (box / cols)*Yspace + canvas.y,
+      (box % cols)*Xspace + Xspace + canvas.x,
       (box / cols)*Yspace + Yspace + canvas.y
     );
     Pixels[box / cols] = 0;
@@ -43,9 +43,9 @@ void drawPixels(struct Canvas canvas, byte cols, byte rows, byte tog, int color,
 
   Pixel.Coords
   (
-    (box % cols)*Xspace + canvas.x, 
-    (box / cols)*Yspace + canvas.y, 
-    (box % cols)*Xspace + Xspace + canvas.x, 
+    (box % cols)*Xspace + canvas.x,
+    (box / cols)*Yspace + canvas.y,
+    (box % cols)*Xspace + Xspace + canvas.x,
     (box / cols)*Yspace + Yspace + canvas.y
   );
   if (Pixel.Touch(false))
@@ -53,9 +53,9 @@ void drawPixels(struct Canvas canvas, byte cols, byte rows, byte tog, int color,
     myGLCD.setColor(tog ? color : canvas.BC);
     myGLCD.fillRect
     (
-      (box % cols)*Xspace + canvas.x + 1, 
-      (box / cols)*Yspace + canvas.y + 1, 
-      (box % cols)*Xspace + Xspace + canvas.x - 1, 
+      (box % cols)*Xspace + canvas.x + 1,
+      (box / cols)*Yspace + canvas.y + 1,
+      (box % cols)*Xspace + Xspace + canvas.x - 1,
       (box / cols)*Yspace + Yspace + canvas.y - 1
     );
     if (tog)
@@ -63,8 +63,8 @@ void drawPixels(struct Canvas canvas, byte cols, byte rows, byte tog, int color,
     else
       bitClear(Pixels[box / cols], cols - 1 - (box % cols));
   }
-  
-  #if 0  // see hex values per row
+
+#if 0  // see hex values per row
   if ((box % cols) == 0)
   {
     myGLCD.setColor(WHITE);
@@ -74,8 +74,8 @@ void drawPixels(struct Canvas canvas, byte cols, byte rows, byte tog, int color,
     Dec2Hex(Pixels[box / cols], buffer, SIZE);
     myGLCD.print(buffer, canvas.w + canvas.x + 10, canvas.y + Yspace * (box / cols));
   }
-  #endif
-  
+#endif
+
   box++;
   if (box >= (rows * cols))
     box = 0;
@@ -95,7 +95,7 @@ void Dec2Hex(unsigned short D, char * buf, byte Size)
 }
 
 void drawLoadedImg(struct Canvas canvas, short * img, byte cols, byte rows, byte G)
-{ 
+{
   myGLCD.setColor(canvas.BC);
   myGLCD.fillRect(canvas.x, canvas.y, canvas.x + canvas.w, canvas.y + canvas.h);
 
@@ -104,24 +104,24 @@ void drawLoadedImg(struct Canvas canvas, short * img, byte cols, byte rows, byte
 
   for (int box = 0; box < (rows * cols); box++)
   {
-    myGLCD.setColor((bitRead(img[(box / cols)], (8*SIZE - 1) - (box % cols)) ? GREEN : canvas.BC));
+    myGLCD.setColor((bitRead(img[(box / cols)], (8 * SIZE - 1) - (box % cols)) ? GREEN : canvas.BC));
 
     myGLCD.fillRect
     (
-      (box % cols)*Xspace + canvas.x, 
-      (box / cols)*Yspace + canvas.y, 
-      (box % cols)*Xspace + Xspace + canvas.x, 
+      (box % cols)*Xspace + canvas.x,
+      (box / cols)*Yspace + canvas.y,
+      (box % cols)*Xspace + Xspace + canvas.x,
       (box / cols)*Yspace + Yspace + canvas.y
     );
-    
+
     if (G)
     {
       myGLCD.setColor(canvas.FC);
       myGLCD.drawRect
       (
-        (box % cols)*Xspace + canvas.x, 
-        (box / cols)*Yspace + canvas.y, 
-        (box % cols)*Xspace + Xspace + canvas.x, 
+        (box % cols)*Xspace + canvas.x,
+        (box / cols)*Yspace + canvas.y,
+        (box % cols)*Xspace + Xspace + canvas.x,
         (box / cols)*Yspace + Yspace + canvas.y
       );
     }
@@ -140,8 +140,7 @@ short HexChar2Dec(char Ch)
 
 /*
    This filter function is designed to read the image file's contents within the curly brackets {...}
-   I had to make my own function to read the data because the PROGMEM functions were not returning the correct results
-   and they were not flexable to handle both types of file formats, (MONO / COLOR, BYTES / INTS)
+   I had to make my own function to read the data because you can't use the PROGMEM read functions on an SD card
 */
 int Filter(File myImg)
 {
@@ -149,7 +148,7 @@ int Filter(File myImg)
   if (IsWithin(currentChar, '0', '9'))
   {
     char nextChar = myImg.read();
-    
+
     if ((currentChar == '0') && (nextChar == 'x' || nextChar == 'X'))
     {
       //Serial.println(F("found 0x"));
@@ -158,24 +157,24 @@ int Filter(File myImg)
       while (1)
       {
         search = myImg.read();
-        
+
         if (search == ',' || search == ' ') break;
         val = (val * 16) + HexChar2Dec(search);
       }
-      
+
       return val;
     }
-  }    
-  else if ((currentChar == '}') && (myImg.read() == ';'))
+  }
+  else if ((currentChar == '}') && (myImg.read() == ';')) // end of data
     return 0;
-    else if ((currentChar == '/') && (myImg.read() == '/'))
+  else if ((currentChar == '/') && (myImg.read() == '/')) // comment
   {
     char C = 0;
-    while(1)
+    while (1)
     {
       C = myImg.read();
       //Serial << char(C);
-      if(( C == 10) || (C == 13))
+      if (( C == 10) || (C == 13))
       {
         //Serial.println();
         break;

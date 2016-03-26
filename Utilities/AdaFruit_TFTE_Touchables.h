@@ -1,6 +1,30 @@
 #ifndef AdaFruit_TFTE_Touchables_h
 #define AdaFruit_TFTE_Touchables_h
 
+/*
+The MIT License (MIT)
+
+Copyright (c) 2016 Andrew Mascolo Jr
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 class Box : public Base
 {
 	struct Properties
@@ -126,24 +150,24 @@ class Box : public Base
           if (!locked)
           {
             if (Props.Fill)
-              (Props.Round ? _Disp->fillRoundRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y,2, Props.PadColor) : _Disp->fillRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y, Props.PadColor));
+              (Props.Round ? _Disp->fillRoundRect(Props.x, Props.y, Props.width, Props.height,2, Props.PadColor) : _Disp->fillRect(Props.x, Props.y, Props.width, Props.height, Props.PadColor));
             else
-              (Props.Round ? _Disp->drawRoundRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y,2, Props.PadColor) : _Disp->drawRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y, Props.PadColor));
+              (Props.Round ? _Disp->drawRoundRect(Props.x, Props.y, Props.width, Props.height,2, Props.PadColor) : _Disp->drawRect(Props.x, Props.y, Props.width, Props.height, Props.PadColor));
 
             locked = true;
           }
 
           if (Props.Fill)
-            (Props.Round ? _Disp->fillRoundRect(Props.x + Props.PaddingSize, Props.y + Props.PaddingSize, Props.x2-Props.x - Props.PaddingSize*2, Props.y2-Props.y - Props.PaddingSize*2,2,(State ? Props.C1 : Props.C2)) : _Disp->fillRect(Props.x + Props.PaddingSize, Props.y + Props.PaddingSize, Props.x2-Props.x - Props.PaddingSize*2, Props.y2-Props.y - Props.PaddingSize*2,(State ? Props.C1 : Props.C2)) );
+            (Props.Round ? _Disp->fillRoundRect(Props.x + Props.PaddingSize, Props.y + Props.PaddingSize, Props.width - Props.PaddingSize*2, Props.height - Props.PaddingSize*2,2,(State ? Props.C1 : Props.C2)) : _Disp->fillRect(Props.x + Props.PaddingSize, Props.y + Props.PaddingSize, Props.width - Props.PaddingSize*2, Props.height - Props.PaddingSize*2,(State ? Props.C1 : Props.C2)) );
           else
-            (Props.Round ? _Disp->drawRoundRect(Props.x + Props.PaddingSize, Props.y + Props.PaddingSize, Props.x2-Props.x - Props.PaddingSize*2, Props.y2-Props.y - Props.PaddingSize*2,2,(State ? Props.C1 : Props.C2))  : _Disp->drawRect(Props.x + Props.PaddingSize, Props.y + Props.PaddingSize, Props.x2-Props.x - Props.PaddingSize*2, Props.y2-Props.y - Props.PaddingSize*2,(State ? Props.C1 : Props.C2)) );
+            (Props.Round ? _Disp->drawRoundRect(Props.x + Props.PaddingSize, Props.y + Props.PaddingSize, Props.width - Props.PaddingSize*2, Props.height - Props.PaddingSize*2,2,(State ? Props.C1 : Props.C2))  : _Disp->drawRect(Props.x + Props.PaddingSize, Props.y + Props.PaddingSize, Props.width - Props.PaddingSize*2, Props.height - Props.PaddingSize*2,(State ? Props.C1 : Props.C2)) );
         }
         else
         {
           if (Props.Fill)
-            (Props.Round ? _Disp->fillRoundRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y,2,(State ? Props.C1 : Props.C2)) : _Disp->fillRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y,(State ? Props.C1 : Props.C2)));
+            (Props.Round ? _Disp->fillRoundRect(Props.x, Props.y, Props.width, Props.height,2,(State ? Props.C1 : Props.C2)) : _Disp->fillRect(Props.x, Props.y, Props.width, Props.height,(State ? Props.C1 : Props.C2)));
           else
-            (Props.Round ? _Disp->drawRoundRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y,2,(State ? Props.C1 : Props.C2)) : _Disp->drawRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y,(State ? Props.C1 : Props.C2)));
+            (Props.Round ? _Disp->drawRoundRect(Props.x, Props.y, Props.width, Props.height,2,(State ? Props.C1 : Props.C2)) : _Disp->drawRect(Props.x, Props.y, Props.width, Props.height,(State ? Props.C1 : Props.C2)));
         }
 		if(Props.Fill)
 		  setBackColor(State ? Props.C1 : Props.C2);
@@ -1308,7 +1332,7 @@ class Slider : public Base
       SetRange();
       SetValue(-1);
       SetDirection(LTR);
-      Padding(2, WHITE);
+      Padding(2, WHITE, NoBars);
       T = -1;
     }
 	
@@ -1380,35 +1404,42 @@ class Slider : public Base
         if (!locked)
         {
           if (Props.Fill)
-            (Props.Round ? _Disp->fillRoundRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y,2, Props.PadColor) : _Disp->fillRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y, Props.PadColor));
+            (Props.Round ? _Disp->fillRoundRect(Props.x, Props.y, Props.width, Props.height,2, Props.PadColor) : _Disp->fillRect(Props.x, Props.y, Props.width, Props.height, Props.PadColor));
           else
-            (Props.Round ? _Disp->drawRoundRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y,2, Props.PadColor) : _Disp->drawRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y, Props.PadColor));
+            (Props.Round ? _Disp->drawRoundRect(Props.x, Props.y, Props.width, Props.height,2, Props.PadColor) : _Disp->drawRect(Props.x, Props.y, Props.width, Props.height, Props.PadColor));
           locked = true;
         }
 
         if (Props.Fill)
-          (Props.Round ? _Disp->fillRoundRect(Props.x + Props.PaddingSize, Props.y + Props.PaddingSize, Props.x2-Props.x - Props.PaddingSize, Props.y2-Props.y - Props.PaddingSize,2, Props.C2) : _Disp->fillRect(Props.x + Props.PaddingSize, Props.y + Props.PaddingSize, Props.x2-Props.x - Props.PaddingSize, Props.y2-Props.y - Props.PaddingSize, Props.C2));
+          (Props.Round ? _Disp->fillRoundRect(Props.x + Props.PaddingSize, Props.y + Props.PaddingSize, Props.width - Props.PaddingSize, Props.height - Props.PaddingSize,2, Props.C2) : _Disp->fillRect(Props.x + Props.PaddingSize, Props.y + Props.PaddingSize, Props.width - Props.PaddingSize, Props.height - Props.PaddingSize, Props.C2));
         else
-          (Props.Round ? _Disp->drawRoundRect(Props.x + Props.PaddingSize, Props.y + Props.PaddingSize, Props.x2-Props.x - Props.PaddingSize, Props.y2-Props.y - Props.PaddingSize, 2,Props.C2) : _Disp->drawRect(Props.x + Props.PaddingSize, Props.y + Props.PaddingSize, Props.x2-Props.x - Props.PaddingSize, Props.y2-Props.y - Props.PaddingSize, Props.C2));
+          (Props.Round ? _Disp->drawRoundRect(Props.x + Props.PaddingSize, Props.y + Props.PaddingSize, Props.width - Props.PaddingSize, Props.height - Props.PaddingSize, 2,Props.C2) : _Disp->drawRect(Props.x + Props.PaddingSize, Props.y + Props.PaddingSize, Props.width - Props.PaddingSize, Props.height - Props.PaddingSize, Props.C2));
       }
       else
       {
         if (Props.Fill)
-          (Props.Round ? _Disp->fillRoundRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y,2, Props.C2) : _Disp->fillRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y, Props.C2));
+          (Props.Round ? _Disp->fillRoundRect(Props.x, Props.y, Props.width, Props.height,2, Props.C2) : _Disp->fillRect(Props.x, Props.y, Props.width, Props.height, Props.C2));
         else
-          (Props.Round ? _Disp->drawRoundRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y,2, Props.C2) : _Disp->drawRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y, Props.C2));
+          (Props.Round ? _Disp->drawRoundRect(Props.x, Props.y, Props.width, Props.height,2, Props.C2) : _Disp->drawRect(Props.x, Props.y, Props.width, Props.height, Props.C2));
       }
+	  Update();
 	  //Restore_MainColor;
     }
 
     int Touch()
+	{
+	  int tmpTS = -1;
+	  if ((tmpTS = getTouchState()) != -1)
+        T = tmpTS;
+	
+	  Update();
+	}
+	
+    int Update()
     {
 	  //Save_MainColor;
       int Out = -1;
-      int tmpTS = -1, tmpGV = -1;
-
-      if ((tmpTS = getTouchState()) != -1)
-        T = tmpTS;
+      int tmpGV = -1;
 
       if ((tmpGV = GetValue()) != -1)
         T = tmpGV;
@@ -1462,7 +1493,7 @@ class Slider : public Base
           }
         }
         if (T > -1)
-          Out = Map(T, (orient ? Props.y : Props.x), (orient ? Props.y2 : Props.x2), H, L - 1);
+          Out = TFTE_Map(T, (orient ? Props.y : Props.x), (orient ? Props.y2 : Props.x2), H, L - 1);
       }
 	  //Restore_MainColor;
       return Out;
@@ -1476,16 +1507,15 @@ class Slider : public Base
       {
         if (SV > H) SV = H;
         if (SV < L) SV = L;
-        T = Map(SV, L, H, (orient ? Props.y2 : Props.x2), (orient ? Props.y : Props.x));
+        T = TFTE_Map(SV, L, H, (orient ? Props.y2 : Props.x2), (orient ? Props.y : Props.x));
       }
-
     }
 
-    void Padding(byte padding = 0, uint16_t padColor = WHITE, bool barsoff = 0)
+    void Padding(byte padding = 0, uint16_t padColor = WHITE, bool bars = 0)
     {
       Props.PaddingSize = padding;
       Props.PadColor = padColor;
-      BarsOff = barsoff;
+      BarsOff = !bars;
     }
 
     void SetRange(long l = 0, long h = 10, byte inc = 1)
@@ -1507,7 +1537,7 @@ class Slider : public Base
         if (Props.Direction == RTL || Props.Direction == BTT)
           Swap(SL, SH);
 
-        Value = Map(Val, L, H, SL, SH);
+        Value = TFTE_Map(Val, L, H, SL, SH);
       }
     }
 
@@ -1595,12 +1625,15 @@ class Swipe : public Base
 	  Ylimit = Y;
 	} 
 
-    void ShowSwipeArea(bool En = false, uint16_t color = RED, byte type = SQUARED)
+    void ShowSwipeArea(bool En = false, uint16_t color = RED, byte type = SQUARED, bool filled = NOFILL)
     {
-	  //Save_MainColor;
 	  if(En)
-        (type? _Disp->drawRoundRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y, 2, color) : _Disp->drawRect(Props.x, Props.y, Props.x2-Props.x, Props.y2-Props.y, color));
-	  //Restore_MainColor;
+	  {
+		if(filled)
+			(type? _Disp->fillRoundRect(Props.x, Props.y, Props.width, Props.height,3,color) : _Disp->fillRect(Props.x, Props.y, Props.width, Props.height,color));
+		else
+			(type? _Disp->drawRoundRect(Props.x, Props.y, Props.width, Props.height,3,color) : _Disp->drawRect(Props.x, Props.y, Props.width, Props.height,color));
+	  }
     }
 
     bool getTouchState()

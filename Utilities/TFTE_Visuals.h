@@ -1,6 +1,30 @@
 #ifndef TFTE_Visuals_h
 #define TFTE_Visuals_h
 
+/*
+The MIT License (MIT)
+
+Copyright (c) 2016 Andrew Mascolo Jr
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 class ProgressBar : public Base
 { 
   protected:
@@ -15,30 +39,46 @@ class ProgressBar : public Base
 	
 	~ProgressBar(){ }
 	
+	struct Properties
+	{
+	  int x;
+	  int y;
+	  int width;
+	  int height;
+	  int x2;
+	  int y2;
+	  word fColor;
+	  long bColor;
+	  char type;
+	  bool Fs;
+	}Props;
+	
     void Coords(int x1, int y1, int x2, int y2)
 	{
-	  X1 = x1;
-      Y1 = y1;
-      X2 = x2;
-      Y2 = y2;
+	  Props.x = x1;
+      Props.y = y1;
+      Props.x2 = x2;
+      Props.y2 = y2;
+	  Props.height = y2 - y1;
+	  Props.width = x2 - x1;
 	}
 	
 	void Attributes(word color, bool fontsize, char type, long bgc = 0xFFFFFFFF)
 	{
-	  Color = color;
-	  BGC = bgc;
-	  Type = type;
-	  FS = fontsize;
+	  Props.fColor = color;
+	  Props.bColor = bgc;
+	  Props.type = type;
+	  Props.Fs = fontsize;
 	}
 	
 	void Attributes(char * _text, word color, bool fontsize, char filler = ' ', long bgc = 0xFFFFFFFF)
 	{
-	  Color = color;
-	  BGC = bgc;
+	  Props.fColor = color;
+	  Props.bColor = bgc;
 	  text = _text;
-	  Type = '#';
+	  Props.type = '#';
 	  Filler = filler;
-	  FS = fontsize;
+	  Props.Fs = fontsize;
 	}
 	
 	/*  Conflict with these two
@@ -56,45 +96,45 @@ class ProgressBar : public Base
 	void Progress()
 	{
 	  unsigned int centerBar, Leftside, length = strlen(text);
-	  _Disp->setColor(Color);
-	  _Disp->setBackColor(BGC);
+	  _Disp->setColor(Props.fColor);
+	  _Disp->setBackColor(Props.bColor);
 	  
-	  if(X2 == AUTO)
-	    X2 = X1 + length*(FS? 16 : 8) + 10;
+	  if(Props.x2 == AUTO)
+	    Props.x2 = Props.x + length*(Props.Fs? 16 : 8) + 10;
 		
-	  if(Y2 == AUTO)
-	    Y2 = Y1 + (FS? 16 : 12) + 10;
+	  if(Props.y2 == AUTO)
+	    Props.y2 = Props.y + (Props.Fs? 16 : 12) + 10;
 	  
-	  if(Type == '#')
+	  if(Props.type == '#')
 	  {
-	    centerBar = (X1 + X2)/2;
+	    centerBar = (Props.x + Props.x2)/2;
 		
-		Leftside = centerBar - length*(FS? 8 : 4);
+		Leftside = centerBar - length*(Props.Fs? 8 : 4);
 	  }
 	  
 	  //Overwrite Leftside from above
-	  if(X2 == AUTO)
-	    Leftside = X1;
+	  if(Props.x2 == AUTO)
+	    Leftside = Props.x;
 
-	  for (unsigned int L = X1, i = 0; L < X2 ; L++)
+	  for (unsigned int L = Props.x, i = 0; L < Props.x2 ; L++)
 	  {
-		switch (Type)
+		switch (Props.type)
 		{
 		  case '/':
-			_Disp->drawLine(L, Y1, L - 10, Y2);
+			_Disp->drawLine(L, Props.y, L - 10, Props.y2);
 			break;
 		  
 		  case '\\':
-			_Disp->drawLine(L - 10, Y1, L, Y2);
+			_Disp->drawLine(L - 10, Props.y, L, Props.y2);
 			break;
 			
 		  case '>':
-			_Disp->drawLine(L, Y1, L + 10, (Y1 + Y2)/2);
-			_Disp->drawLine(L + 10, (Y1 + Y2)/2, L, Y2);
+			_Disp->drawLine(L, Props.y, L + 10, (Props.y + Props.y2)/2);
+			_Disp->drawLine(L + 10, (Props.y + Props.y2)/2, L, Props.y2);
 			break;
 		  
 		  case '|':
-			_Disp->drawVLine(L, Y1, Y2 - Y1);
+			_Disp->drawVLine(L, Props.y, Props.y2 - Props.y);
 			break;
           
 		  case '#':	
@@ -102,21 +142,21 @@ class ProgressBar : public Base
 			{
 			  if(i < length)
 			  {
-		        _Disp->printChar(*text++, L, Y1);
+		        _Disp->printChar(*text++, L, Props.y);
 				i++;
 			  }
 			  else 
-			    _Disp->printChar(Filler, L, Y1);
+			    _Disp->printChar(Filler, L, Props.y);
 			}
 			else 
-			  _Disp->printChar(Filler, L, Y1);
+			  _Disp->printChar(Filler, L, Props.y);
 			
-			L += (FS? 16 : 12)-1;
+			L += (Props.Fs? 16 : 12)-1;
 			break;
 			
           default:
-            _Disp->printChar(Type, L, Y1);
-			L += (FS? 16 : 12)-1;
+            _Disp->printChar(Props.type, L, Props.y);
+			L += (Props.Fs? 16 : 12)-1;
 			break;			
 		}
 		
@@ -124,16 +164,31 @@ class ProgressBar : public Base
 	  }
 	}
 	
+	Properties getButtonProperties()
+	{
+	  return Props;
+	}
+	
 	private:
-      int X1, Y1, X2, Y2; //16
-	  word Color;
-	  long BGC;
-	  char Type, *text, Filler;
-	  bool FS;
+	  char *text, Filler;
 };
 
 class Meter : public Base
 {
+	struct Properties
+	{
+	  int x;
+	  int y;
+	  int width;
+	  int height;
+	  int x2;
+	  int y2;
+	  word C1, C2, C3, BC, PadColor, TouchColor, HFcolor, PercentageTouchColor;
+	  long TouchBackColor, PercentageTouchBackColor;
+	  bool Round, Fill, Direction;
+	  byte PaddingSize, FontSize, PercentageFontSize;
+	}Props;
+	
   protected:
     bool orient;
     TFT_Display *_Disp;
@@ -159,65 +214,67 @@ class Meter : public Base
 	
     void Coords(int x1, int y1, int x2, int y2)
     {
-      X1 = x1;
-      Y1 = y1;
-      X2 = x2;
-      Y2 = y2;
+      Props.x = x1;
+      Props.y = y1;
+      Props.x2 = x2;
+      Props.y2 = y2;
+	  Props.width = x2 - x1;
+	  Props.height = y2 - y1;
     }
 
     void Attributes(bool round, bool fill)
     {
-      Round = round;
-      Fill = fill;
+      Props.Round = round;
+      Props.Fill = fill;
     }
 
     void Colors(word c1, word c2, word c3, word bc)
     {
-      C1 = c1;
-      C2 = c2;
-      C3 = c3;
-      BC = bc;
+      Props.C1 = c1;
+      Props.C2 = c2;
+      Props.C3 = c3;
+      Props.BC = bc;
     }
 
     void Percentages(byte hi, byte mid, byte low = 0)
     {
 	  if(orient == VERTICAL)
 	  {
-		int T_height = ((Y2 - Y1) - (_padding * 2));
-		if(Direction == BTT)
+		int T_height = ((Props.y2 - Props.y) - (Props.PaddingSize * 2));
+		if(Props.Direction == BTT)
 		{
-		  Hi =  Y2 - (T_height * (float(hi) / 100.0));
-		  Mid = Y2 - (T_height * (float(mid) / 100.0));
-		  Low = Y2 - (T_height * (float(low) / 100.0));
+		  Hi =  Props.y2 - (T_height * (float(hi) / 100.0));
+		  Mid = Props.y2 - (T_height * (float(mid) / 100.0));
+		  Low = Props.y2 - (T_height * (float(low) / 100.0));
 		}
 		else
 		{
-		  Hi = (T_height * (float(hi) / 100.0)) + Y1;
-		  Mid = (T_height * (float(mid) / 100.0)) + Y1;
-		  Low = (T_height * (float(low) / 100.0)) + Y1;
+		  Hi = (T_height * (float(hi) / 100.0)) + Props.y;
+		  Mid = (T_height * (float(mid) / 100.0)) + Props.y;
+		  Low = (T_height * (float(low) / 100.0)) + Props.y;
 		}
       }
 	  else
 	  {
-	    int T_width = ((X2 - X1) - (_padding * 2));
-		if(Direction == RTL)
+	    int T_width = ((Props.x2 - Props.x) - (Props.PaddingSize * 2));
+		if(Props.Direction == RTL)
 		{
-		  Hi = X2 - (T_width * (float(hi) / 100.0));
-		  Mid = X2 - (T_width * (float(mid) / 100.0));
-		  Low = X2 - (T_width * (float(low) / 100.0));
+		  Hi = Props.x2 - (T_width * (float(hi) / 100.0));
+		  Mid = Props.x2 - (T_width * (float(mid) / 100.0));
+		  Low = Props.x2 - (T_width * (float(low) / 100.0));
 		}
 		else
 		{
-		  Hi = (T_width * (float(hi) / 100.0)) - X1;
-		  Mid = (T_width * (float(mid) / 100.0)) - X1;
-		  Low = (T_width * (float(low) / 100.0)) - X1;
+		  Hi = (T_width * (float(hi) / 100.0)) - Props.x;
+		  Mid = (T_width * (float(mid) / 100.0)) - Props.x;
+		  Low = (T_width * (float(low) / 100.0)) - Props.x;
 		}
 	  }
     }
 
     void SetDirection(bool Dir) // Not used at this time
     {
-      Direction = Dir;
+      Props.Direction = Dir;
     }
 
     void Draw()
@@ -225,36 +282,36 @@ class Meter : public Base
       extern uint8_t SmallFont[];
       extern uint8_t BigFont[];
       Save_MainColor;
-      if (_padding > 0)
+      if (Props.PaddingSize > 0)
       {
         if (!locked)
         {
-          _Disp->setColor(PadColor);
-          if (Fill)
-            (Round ? _Disp->fillRoundRect(X1, Y1, X2, Y2) : _Disp->fillRect(X1, Y1, X2, Y2));
+          _Disp->setColor(Props.PadColor);
+          if (Props.Fill)
+            (Props.Round ? _Disp->fillRoundRect(Props.x, Props.y, Props.x2, Props.y2) : _Disp->fillRect(Props.x, Props.y, Props.x2, Props.y2));
           else
-            (Round ? _Disp->drawRoundRect(X1, Y1, X2, Y2) : _Disp->drawRect(X1, Y1, X2, Y2));
+            (Props.Round ? _Disp->drawRoundRect(Props.x, Props.y, Props.x2, Props.y2) : _Disp->drawRect(Props.x, Props.y, Props.x2, Props.y2));
           locked = true;
         }
 
-        _Disp->setColor(BC);
-        if (Fill)
-          (Round ? _Disp->fillRoundRect(X1 + _padding, Y1 + _padding, X2 - _padding, Y2 - _padding) : _Disp->fillRect(X1 + _padding, Y1 + _padding, X2 - _padding, Y2 - _padding));
+        _Disp->setColor(Props.BC);
+        if (Props.Fill)
+          (Props.Round ? _Disp->fillRoundRect(Props.x + Props.PaddingSize, Props.y + Props.PaddingSize, Props.x2 - Props.PaddingSize, Props.y2 - Props.PaddingSize) : _Disp->fillRect(Props.x + Props.PaddingSize, Props.y + Props.PaddingSize, Props.x2 - Props.PaddingSize, Props.y2 - Props.PaddingSize));
         else
-          (Round ? _Disp->drawRoundRect(X1 + _padding, Y1 + _padding, X2 - _padding, Y2 - _padding) : _Disp->drawRect(X1 + _padding, Y1 + _padding, X2 - _padding, Y2 - _padding));
+          (Props.Round ? _Disp->drawRoundRect(Props.x + Props.PaddingSize, Props.y + Props.PaddingSize, Props.x2 - Props.PaddingSize, Props.y2 - Props.PaddingSize) : _Disp->drawRect(Props.x + Props.PaddingSize, Props.y + Props.PaddingSize, Props.x2 - Props.PaddingSize, Props.y2 - Props.PaddingSize));
       }
       else
       {
-        _Disp->setColor(BC);
-        if (Fill)
-          (Round ? _Disp->fillRoundRect(X1, Y1, X2, Y2) : _Disp->fillRect(X1, Y1, X2, Y2));
+        _Disp->setColor(Props.BC);
+        if (Props.Fill)
+          (Props.Round ? _Disp->fillRoundRect(Props.x, Props.y, Props.x2, Props.y2) : _Disp->fillRect(Props.x, Props.y, Props.x2, Props.y2));
         else
-          (Round ? _Disp->drawRoundRect(X1, Y1, X2, Y2) : _Disp->drawRect(X1, Y1, X2, Y2));
+          (Props.Round ? _Disp->drawRoundRect(Props.x, Props.y, Props.x2, Props.y2) : _Disp->drawRect(Props.x, Props.y, Props.x2, Props.y2));
       }
 
-      _Disp->setColor(Tcolor);
-	  _Disp->setBackColor(TBcolor);
-      _Disp->setFont(textSize ? BigFont : SmallFont);
+      _Disp->setColor(Props.TouchColor);
+	  _Disp->setBackColor(Props.TouchBackColor);
+      _Disp->setFont(Props.FontSize ? BigFont : SmallFont);
 	  if(strcmp(text, " "))
         _Disp->print(text, TX, TY);
 
@@ -268,22 +325,22 @@ class Meter : public Base
 	
     void Text(char * T, word color, long Bcolor, byte size, int pos)
     {
-      textSize = size;
+      Props.FontSize = size;
       int Tsize = strlen(T) * (size ? 8 : 4);
-      Tcolor = color;
-      TBcolor = Bcolor;
+      Props.TouchColor = color;
+      Props.TouchBackColor = Bcolor;
 	  
-      TX = ((X1 + X2) / 2) - Tsize;
+      TX = ((Props.x + Props.x2) / 2) - Tsize;
       switch (pos)
       {
         case TOP:
-          TY = Y1 - 20;
+          TY = Props.y - 20;
           break;
         case MIDDLE:
-          TY = ((Y1 + Y2) / 2) - 8;
+          TY = ((Props.y + Props.y2) / 2) - 8;
           break;
         case BOTTOM:
-          TY = Y2 + 20;
+          TY = Props.y2 + 20;
           break;
         default:
           TY = pos;
@@ -319,22 +376,22 @@ class Meter : public Base
 	
     void ProgressText(word color, long Bcolor, byte size, int pos = BOTTOM)
     {
-      P_textSize = size;
+      Props.PercentageFontSize = size;
       int Tsize = 6 * (size ? 8 : 4);
-      P_Tcolor = color;
-      P_TBcolor = Bcolor;
+      Props.PercentageTouchColor = color;
+      Props.PercentageTouchBackColor = Bcolor;
 	  
-      P_TX = ((X1 + X2) / 2) - Tsize;
+      P_TX = ((Props.x + Props.x2) / 2) - Tsize;
       switch (pos)
       {
         case TOP:
-          P_TY = Y1 - 20;
+          P_TY = Props.y - 20;
           break;
         case MIDDLE:
-          P_TY = ((Y1 + Y2) / 2) - 8;
+          P_TY = ((Props.y + Props.y2) / 2) - 8;
           break;
         case BOTTOM:
-          P_TY = Y2 + 5;
+          P_TY = Props.y2 + 5;
           break;
         default:
           P_TY = pos;
@@ -352,110 +409,110 @@ class Meter : public Base
 		
       if(orient == VERTICAL)
 	  {
-		  if(Direction == BTT)
+		  if(Props.Direction == BTT)
 		  {
 			//BTT
-			for (int Y = Y2 - _padding; Y >= Y1 + _padding; Y--)
+			for (int Y = Props.y2 - Props.PaddingSize; Y >= Props.y + Props.PaddingSize; Y--)
 			{
 			  if (T <= Y)
 			  {
 				if((Y <= Low) && (Y > Mid)) 
-				  _Disp -> setColor(C3);
+				  _Disp -> setColor(Props.C3);
 				else if((Y <= Mid) && (Y > Hi))
-				  _Disp -> setColor(C2);
-				else if((Y <= Hi) && (Y > Y1))
-				  _Disp -> setColor(C1);
+				  _Disp -> setColor(Props.C2);
+				else if((Y <= Hi) && (Y > Props.y))
+				  _Disp -> setColor(Props.C1);
 			  }
 			  else
-				_Disp->setColor(BC);
+				_Disp->setColor(Props.BC);
 
-			  _Disp->drawHLine(X1 + _padding, Y, (X2 - X1) - _padding * 2);
+			  _Disp->drawHLine(Props.x + Props.PaddingSize, Y, (Props.x2 - Props.x) - Props.PaddingSize * 2);
 			}
 		  }
 		  else
 		  {
-			  for (int Y = Y1 + _padding; Y < Y2 - _padding; Y++)
+			  for (int Y = Props.y + Props.PaddingSize; Y < Props.y2 - Props.PaddingSize; Y++)
 			  {
 				if (T >= Y)
 				{
 				  if((Y > Low) && (Y <= Mid)) 
-					_Disp -> setColor(C3);
+					_Disp -> setColor(Props.C3);
 				  else if((Y > Mid) && (Y <= Hi))
-					_Disp -> setColor(C2);
-				  else if((Y > Hi) && (Y <= Y2))
-					_Disp -> setColor(C1);
+					_Disp -> setColor(Props.C2);
+				  else if((Y > Hi) && (Y <= Props.y2))
+					_Disp -> setColor(Props.C1);
 				}
 				else
-				  _Disp->setColor(BC);
+				  _Disp->setColor(Props.BC);
 
-				_Disp->drawHLine(X1 + _padding, Y, (X2 - X1) - _padding * 2);
+				_Disp->drawHLine(Props.x + Props.PaddingSize, Y, (Props.x2 - Props.x) - Props.PaddingSize * 2);
 			  }
 		  }
 	  }
 	  else
 	  {
-	    if(Direction == LTR)
+	    if(Props.Direction == LTR)
 		  {
 			//LTR
-			for (int X = X1 + _padding; X <= X2 - _padding; X++)
+			for (int X = Props.x + Props.PaddingSize; X <= Props.x2 - Props.PaddingSize; X++)
 			{
 			  if (T >= X)
 			  {
 				if((X >= Low) && (X < Mid)) 
-				  _Disp -> setColor(C3);
+				  _Disp -> setColor(Props.C3);
 				else if((X >= Mid) && (X < Hi))
-				  _Disp -> setColor(C2);
-				else if((X >= Hi) && (X < X2))
-				  _Disp -> setColor(C1);
+				  _Disp -> setColor(Props.C2);
+				else if((X >= Hi) && (X < Props.x2))
+				  _Disp -> setColor(Props.C1);
 			  }
 			  else
-				_Disp->setColor(BC);
+				_Disp->setColor(Props.BC);
 
-			  _Disp->drawVLine(X, Y1 + _padding, (Y2 - Y1) - _padding * 2);
+			  _Disp->drawVLine(X, Props.y + Props.PaddingSize, (Props.y2 - Props.y) - Props.PaddingSize * 2);
 			}
 		  }
 		  else
 		  {
-			  for (int X = X2 - _padding; X > X1 + _padding; X--)
+			  for (int X = Props.x2 - Props.PaddingSize; X > Props.x + Props.PaddingSize; X--)
 			  {
 				if (T <= X)
 				{
 				  if((X < Low) && (X >= Mid)) 
-					_Disp -> setColor(C3);
+					_Disp -> setColor(Props.C3);
 				  else if((X < Mid) && (X >= Hi))
-					_Disp -> setColor(C2);
-				  else if((X < Hi) && (X >= X1))
-					_Disp -> setColor(C1);
+					_Disp -> setColor(Props.C2);
+				  else if((X < Hi) && (X >= Props.x))
+					_Disp -> setColor(Props.C1);
 				}
 				else
-				  _Disp->setColor(BC);
+				  _Disp->setColor(Props.BC);
 
-				_Disp->drawVLine(X, Y1 + _padding, (Y2 - Y1) - _padding * 2);
+				_Disp->drawVLine(X, Props.y + Props.PaddingSize, (Props.y2 - Props.y) - Props.PaddingSize * 2);
 			  }
 		  }
 	  }
-      _Disp->setColor(Tcolor);
+      _Disp->setColor(Props.TouchColor);
       _Disp->setBackColor(0xFFFFFFFF);
-      _Disp->setFont(textSize ? BigFont : SmallFont);
+      _Disp->setFont(Props.FontSize ? BigFont : SmallFont);
 	  if(strcmp(text, " "))
         _Disp->print(text, TX, TY);
     
 	  if(textEnable)
 	  {
-        _Disp->setColor(P_Tcolor);
-        _Disp->setBackColor(P_TBcolor);
-        _Disp->setFont(P_textSize ? BigFont : SmallFont);
+        _Disp->setColor(Props.PercentageTouchColor);
+        _Disp->setBackColor(Props.PercentageTouchBackColor);
+        _Disp->setFont(Props.PercentageFontSize ? BigFont : SmallFont);
         char buf[7];
-		byte val = Map(tmpGV, (orient ? Y2 : X2), (orient ? Y1 : X1), 0, 100);
+		byte val = TFTE_Map(tmpGV, (orient ? Props.y2 : Props.x2), (orient ? Props.y : Props.x), 0, 100);
 		
 		if(orient == VERTICAL)
 		{
-		  if(Direction == TTB)
+		  if(Props.Direction == TTB)
 		    val = 100 - val;
 		}
 		else
 		{
-		  if(Direction == LTR)
+		  if(Props.Direction == LTR)
 		    val = 100 - val;
 		}
 			
@@ -476,19 +533,19 @@ class Meter : public Base
     void SetStartingValue(int SV)
     {
       if (SV == -1)
-        T = (orient ? Y2 : X2);
+        T = (orient ? Props.y2 : Props.x2);
       else
       {
         if (SV > H) SV = H;
         if (SV < L) SV = L;
-        T = Map(SV, L, H, (orient ? Y2 : X2), (orient ? Y1 : X1));
+        T = TFTE_Map(SV, L, H, (orient ? Props.y2 : Props.x2), (orient ? Props.y : Props.x));
       }
     }
 
     void Padding(byte padding = 0, word padColor = WHITE)
     {
-      _padding = padding;
-      PadColor = padColor;
+      Props.PaddingSize = padding;
+      Props.PadColor = padColor;
     }
 
     void SetRange(long l = 0, long h = 10)
@@ -503,20 +560,20 @@ class Meter : public Base
         Value = Val;
       else
       {
-        int SL = (orient ? Y1 : X1);
-        int SH = (orient ? Y2 : X2);
+        int SL = (orient ? Props.y : Props.x);
+        int SH = (orient ? Props.y2 : Props.x2);
         if(orient == VERTICAL)
 		{
-          if (Direction == BTT)
+          if (Props.Direction == BTT)
             Swap(SL, SH);
 		}
 		else
 		{
-		  if (Direction == RTL)
+		  if (Props.Direction == RTL)
             Swap(SL, SH);
 		}
 
-        Value = Map(Val, L, H, SL, SH);
+        Value = TFTE_Map(Val, L, H, SL, SH);
       }
     }
 
@@ -529,25 +586,37 @@ class Meter : public Base
     {
       locked = false;
     }
+	
+	Properties getButtonProperties()
+	{
+	  return Props;
+	}
 
   private:
-    int X1, Y1, X2, Y2; //16
-    byte _padding;//1
-    word C1, C2, C3, BC, PadColor, Tcolor, P_Tcolor;//12
-	long TBcolor, P_TBcolor;
     int TX, TY, P_TX, P_TY;
     char * text;
     int Hi, Mid, Low, Off;
-    bool Round, Fill, Direction;//3
     bool locked;//1
     long L, H;//8
     int Value;//2
     int T;
-    byte textSize, P_textSize;
 };
 
 class Arc
 {
+	struct Properties
+    {
+      int x;
+      int y;
+      int X_Radius;
+      int Y_Radius;
+      int X_Thickness, Y_Thickness;
+      word Color;
+	  long BackColor;
+      int StartAngle, StopAngle, Increments;
+      bool Direction, Lines;
+    } Props;
+	
 	public:
 		Arc(Base * B) : _base(B)
 		{ 
@@ -556,12 +625,12 @@ class Arc
 
 		void Coords(int X, int Y, int XRad, int YRad, int XThick, int YThick)
 		{
-		  cx = X; 
-		  cy = Y; 
-		  Xradius = XRad; 
-		  Xthickness = XThick;
-		  Yradius = YRad; 
-		  Ythickness = YThick;
+		  Props.x = X; 
+		  Props.y = Y; 
+		  Props.X_Radius = XRad; 
+		  Props.X_Thickness = XThick;
+		  Props.Y_Radius = YRad; 
+		  Props.Y_Thickness = YThick;
 		}
 
 		void Coords(int X, int Y, int Rad, int Thick)
@@ -571,51 +640,51 @@ class Arc
 		
 		void Range(int Start, int Stop, int increments)
 		{
-		  start = Start;
-		  stop = Stop;
-		  inc = increments;
-		  dir = true;
-		  if(start < stop)
-		    dir = false;
+		  Props.StartAngle = Start;
+		  Props.StopAngle = Stop;
+		  Props.Increments = increments;
+		  Props.Direction = true;
+		  if(Props.StartAngle < Props.StopAngle)
+		    Props.Direction = false;
 		}
 
-		void Colors(word Color, long BC = 0xffffffff)
+		void Colors(word Color, long BackColor = 0xffffffff)
 		{
-		  color = Color;
-		  BC = BC;
+		  Props.Color = Color;
+		  Props.BackColor = BackColor;
 		}
 
 		void drawArc()
 		{
 		  Save_MainColor;
 	
-		  for(int rotate = start ; rotate != stop; rotate+=(dir? -1 : 1))
+		  for(int rotate = Props.StartAngle ; rotate != Props.StopAngle; rotate+=(Props.Direction? -1 : 1))
 		  {
-			_Disp->setColor(color); 
-			_Disp->setBackColor(BC);
+			_Disp->setColor(Props.Color); 
+			_Disp->setBackColor(Props.BackColor);
 			float _cos1 = -cos(rotate * Deg_to_rad);
 			float _sin1 = sin(rotate * Deg_to_rad);
 
-			int Xo1 = cx + (_cos1 * Xradius);
-			int Xi1 = cx + (_cos1 * (Xradius - Xthickness));
+			int Xo1 = Props.x + (_cos1 * Props.X_Radius);
+			int Xi1 = Props.x + (_cos1 * (Props.X_Radius - Props.X_Thickness));
 
-			int Yo1 = cy + (_sin1 * Yradius);
-			int Yi1 = cy + (_sin1 * (Yradius - Ythickness));
+			int Yo1 = Props.y + (_sin1 * Props.Y_Radius);
+			int Yi1 = Props.y + (_sin1 * (Props.Y_Radius - Props.Y_Thickness));
 		//===============================================
 			int fix;
-			if(dir)
-			  fix = (rotate-4 <= stop? rotate : rotate-4);
+			if(Props.Direction)
+			  fix = (rotate-4 <= Props.StopAngle? rotate : rotate-4);
 			else 
-			  fix = (rotate+4 > stop? rotate : rotate+4);
+			  fix = (rotate+4 > Props.StopAngle? rotate : rotate+4);
 			
 			float _cos2 = -cos(fix * Deg_to_rad);
 			float _sin2 =  sin(fix * Deg_to_rad);
 
-			int Xo2 = cx + (_cos2 * Xradius);
-			int Xi2 = cx + (_cos2 * (Xradius - Xthickness));
+			int Xo2 = Props.x + (_cos2 * Props.X_Radius);
+			int Xi2 = Props.x + (_cos2 * (Props.X_Radius - Props.X_Thickness));
 
-			int Yo2 = cy + (_sin2 * Yradius);
-			int Yi2 = cy + (_sin2 * (Yradius - Ythickness));
+			int Yo2 = Props.y + (_sin2 * Props.Y_Radius);
+			int Yi2 = Props.y + (_sin2 * (Props.Y_Radius - Props.Y_Thickness));
 
 			fillTriangle(Xo2, Yo2, Xo1, Yo1, Xi2, Yi2);
 			fillTriangle(Xo1, Yo1, Xi1, Yi1, Xi2, Yi2);
@@ -662,18 +731,6 @@ class Arc
 			_Disp->drawHLine(XL, Dy, (XR - XL));
 		  }
 		}
-		
-	private:
-		int cx; 
-		int cy; 
-		int Xradius, Yradius;
-		int Xthickness, Ythickness;
-		int start;
-		int stop;
-		word color;
-		bool lines;
-		int inc, dir;
-		long BC;
 	
 	protected:
 	    bool orient;
@@ -683,6 +740,19 @@ class Arc
 
 class Gauge
 {
+	struct Properties
+    {
+      int x;
+      int y;
+      int Radius;
+      int Thickness;
+      word TouchColor, BackColor;
+      int StartAngle, StopAngle, TextStartAngle, TextStopAngle, TextIncrements;
+      bool Direction, Where;
+      int Xoff, Yoff, TS;
+      int TXoff, TYoff;
+    } Props;
+	
   public:
     
 	#if defined(TFT_ScaleFonts_h)
@@ -705,43 +775,43 @@ class Gauge
 	
 	void Coords(int X,int Y, int Radius, int Thickness)
 	{
-	  cx = X;
-	  cy = Y;
-	  radius = Radius;
-	  thick = Thickness;
+	  Props.x = X;
+	  Props.y = Y;
+	  Props.Radius = Radius;
+	  Props.Thickness = Thickness;
 	}
 	
 	void ArcDegrees(int Start, int Stop)
 	{
-	  start = Start;
-	  stop = Stop;
-	  dir = true;
+	  Props.StartAngle = Start;
+	  Props.StopAngle = Stop;
+	  Props.Direction = true;
 	  
-	  if(start < stop)
-	    dir = false;
+	  if(Props.StartAngle < Props.StopAngle)
+	    Props.Direction = false;
 	  
-	  GPosition = start;
+	  GPosition = Props.StartAngle;
 	  ChangePercentage();
 	}
 	
 	void TextColor(word C = WHITE)
 	{
-	  TC = C;
+	  Props.TouchColor = C;
 	}
 
 	void TextRange(int Start, int Stop, int inc, bool where = 0, byte textSize=1)
 	{
-	  Tstart = Start;
-	  Tstop = Stop;		
-	  Tinc = inc;
+	  Props.TextStartAngle = Start;
+	  Props.TextStopAngle = Stop;		
+	  Props.TextIncrements = inc;
 		
-	  Where = where;
+	  Props.Where = where;
 	  numLen = max(numSize(Start), numSize(Stop));
 	
 	#if defined TFT_ScaleFonts_h
-	  TS = textSize;
+	  Props.TS = textSize;
 	#else 
-	  TS = 1;
+	  Props.TS = 1;
 	#endif
 	
 	  TextOffset(0, 0);
@@ -749,11 +819,11 @@ class Gauge
 	
 	void TextOffset(int X = 0, int Y = 0)
 	{
-	  TXoff = X;
-	  TYoff = Y; 
+	  Props.TXoff = X;
+	  Props.TYoff = Y; 
 	  	  
-	  Xoff = (cx - ((_Disp->getFontXsize()*TS)*numLen)/2) + TXoff;
-	  Yoff = (cy - ((_Disp->getFontYsize()/2)*TS)) + TYoff;
+	  Props.Xoff = (Props.x - ((_Disp->getFontXsize()*Props.TS)*numLen)/2) + Props.TXoff;
+	  Props.Yoff = (Props.y - ((_Disp->getFontYsize()/2)*Props.TS)) + Props.TYoff;
 	}
 
 	void Colors(word Cfg, word Cbg)
@@ -783,21 +853,21 @@ class Gauge
 	void Draw(const byte TE = true)
 	{
 	  Save_MainColor;
-	  _Disp->setColor(TC);
+	  _Disp->setColor(Props.TouchColor);
 	  _Disp->setBackColor((_Disp->_transparent? 0xffffffff : _Disp->getBackColor()));
 	  #if defined TFT_ScaleFonts_h
-	  Sfonts->print(Htext, cx - (strlen(Htext)*(_Disp->getFontXsize()/2)*HTsize) + TXoff, Yoff - (_Disp->getFontYsize()*HTsize) + TYoff, HTsize);
-	  Sfonts->print(Ftext, cx - (strlen(Ftext)*(_Disp->getFontXsize()/2)*FTsize) + TXoff, cy + ((_Disp->getFontYsize()/2)*TS)+ TYoff, FTsize);
+	  Sfonts->print(Htext, Props.x - (strlen(Htext)*(_Disp->getFontXsize()/2)*HTsize) + Props.TXoff, Props.Yoff - (_Disp->getFontYsize()*HTsize) + Props.TYoff, HTsize);
+	  Sfonts->print(Ftext, Props.x - (strlen(Ftext)*(_Disp->getFontXsize()/2)*FTsize) + Props.TXoff, Props.y + ((_Disp->getFontYsize()/2)*Props.TS)+ Props.TYoff, FTsize);
 	  #else
-	  _Disp->print(Htext, cx - (strlen(Htext)*_Disp->getFontXsize()/2) + TXoff, Yoff - _Disp->getFontYsize() + TYoff);
-	  _Disp->print(Ftext, cx - (strlen(Ftext)*_Disp->getFontXsize()/2) + TXoff, cy + (_Disp->getFontYsize()/2) + TYoff);
+	  _Disp->print(Htext, Props.x - (strlen(Htext)*_Disp->getFontXsize()/2) + Props.TXoff, Props.Yoff - _Disp->getFontYsize() + Props.TYoff);
+	  _Disp->print(Ftext, Props.x - (strlen(Ftext)*_Disp->getFontXsize()/2) + Props.TXoff, Props.y + (_Disp->getFontYsize()/2) + Props.TYoff);
 	  #endif
 	  
 	  if(TE)
 	    DrawText();
 
 	  EmptyGauge();
-	  lastPos = start + (dir? 1: -1);
+	  lastPos = Props.StartAngle + (Props.Direction? 1: -1);
 	  Restore_MainColor;
 	}
 		
@@ -808,27 +878,27 @@ class Gauge
 	  static int XoL, XiL, YoL,YiL;
 	  int output = 0;
 
-	  int rotate = Map(val, lP, hP, start, stop);
+	  int rotate = TFTE_Map(val, lP, hP, Props.StartAngle, Props.StopAngle);
 	  if(TE)
-	    output = Map(val, lP, hP, Tstart, Tstop);
+	    output = TFTE_Map(val, lP, hP, Props.TextStartAngle, Props.TextStopAngle);
 
 	  float _cos1 = -cos(rotate * Deg_to_rad);
 	  float _sin1 = sin(rotate * Deg_to_rad);
 
-	  int Xo = cx + (_cos1 * radius);
-	  int Xi = cx + (_cos1 * (radius - thick));
+	  int Xo = Props.x + (_cos1 * Props.Radius);
+	  int Xi = Props.x + (_cos1 * (Props.Radius - Props.Thickness));
 
-	  int Yo = cy + (_sin1 * radius);
-	  int Yi = cy + (_sin1 * (radius - thick));
+	  int Yo = Props.y + (_sin1 * Props.Radius);
+	  int Yi = Props.y + (_sin1 * (Props.Radius - Props.Thickness));
 	//===============================================
 	  
-	  if(dir)
+	  if(Props.Direction)
 	    color = (rotate > lastPos ? cbg : cfg);
 	  else
 	    color = (rotate < lastPos ? cbg : cfg);
       
 	  _Disp->setColor(color);
-	  if(rotate < start)
+	  if(rotate < Props.StartAngle)
 	  {
 		fillTriangle(XoL, YoL, Xi, Yi, XiL, YiL);
 		fillTriangle(Xo, Yo, Xi, Yi, XoL, YoL);
@@ -841,12 +911,12 @@ class Gauge
 	  lastPos = rotate;
 	  if(TE)
 	  {
-	    _Disp->setColor(TC);
+	    _Disp->setColor(Props.TouchColor);
 	    _Disp->setBackColor((_Disp->_transparent? 0xffffffff : _Disp->getBackColor()));
 	    #if defined(TFT_ScaleFonts_h)
-	    Sfonts->printNumI(output, Xoff, Yoff , numLen, TS, '0');
+	    Sfonts->printNumI(output, Props.Xoff, Props.Yoff , numLen, Props.TS, '0');
 	    #else
-	    _Disp->printNumI(output, cx - 8*numLen + TXoff, cy - (_Disp->getFontXsize()/2) + TYoff, numLen,'0');
+	    _Disp->printNumI(output, Props.x - 8*numLen + Props.TXoff, Props.y - (_Disp->getFontXsize()/2) + Props.TYoff, numLen,'0');
 	    #endif
 	  }
 	  GPosition = rotate;
@@ -859,18 +929,18 @@ class Gauge
 	  static int XoL, XiL, YoL,YiL;
 	  for(byte r = lP; r <= hP; r++)
 	  {
-	      int rotate = Map(r, lP, hP, start, stop);
+	      int rotate = TFTE_Map(r, lP, hP, Props.StartAngle, Props.StopAngle);
           _Disp->setColor((rotate >= GPosition? cfg:cbg));
 		  float _cos1 = -cos(rotate * Deg_to_rad);
 		  float _sin1 = sin(rotate * Deg_to_rad);
 
-		  int Xo = cx + (_cos1 * radius);
-		  int Xi = cx + (_cos1 * (radius - thick));
+		  int Xo = Props.x + (_cos1 * Props.Radius);
+		  int Xi = Props.x + (_cos1 * (Props.Radius - Props.Thickness));
 
-		  int Yo = cy + (_sin1 * radius);
-		  int Yi = cy + (_sin1 * (radius - thick));
+		  int Yo = Props.y + (_sin1 * Props.Radius);
+		  int Yi = Props.y + (_sin1 * (Props.Radius - Props.Thickness));
 		//===============================================
-		  if(rotate < start)
+		  if(rotate < Props.StartAngle)
 		  {
 			fillTriangle(XoL, YoL, Xi, Yi, XiL, YiL);
 			fillTriangle(Xo, Yo, Xi, Yi, XoL, YoL);
@@ -888,22 +958,22 @@ class Gauge
 	{
 	  int X, Y;
       _Disp->setBackColor((_Disp->_transparent? 0xffffffff : _Disp->getBackColor()));
-	  _Disp->setColor(TC);
-	  for (int rotate = Tstart; rotate <= Tstop; rotate += (Tinc == 0 ? 1 : Tinc))
+	  _Disp->setColor(Props.TouchColor);
+	  for (int rotate = Props.TextStartAngle; rotate <= Props.TextStopAngle; rotate += (Props.TextIncrements == 0 ? 1 : Props.TextIncrements))
 	  {
-        int output = Map(rotate, Tstart, Tstop, start, stop);
+        int output = TFTE_Map(rotate, Props.TextStartAngle, Props.TextStopAngle, Props.StartAngle, Props.StopAngle);
 		float _cos = -cos(output * Deg_to_rad);
 		float _sin = sin(output * Deg_to_rad);
 
-		if(Where)
+		if(Props.Where)
 		{
-		  X = cx-(8*numLen) + (_cos * (radius + 16*(numLen-1)));
-		  Y = cy + (_sin * (radius + 20 - 16*(((output < 0) || (output > 180))? sin(output * Deg_to_rad) : 0)));
+		  X = Props.x-(8*numLen) + (_cos * (Props.Radius + 16*(numLen-1)));
+		  Y = Props.y + (_sin * (Props.Radius + 20 - 16*(((output < 0) || (output > 180))? sin(output * Deg_to_rad) : 0)));
 		}
 		else
 		{
-		  X = cx-(8*(numLen+1)) + (_cos * (radius - thick - (8*(numLen))));
-		  Y = cy + (_sin * (radius - thick - 5));
+		  X = Props.x-(8*(numLen+1)) + (_cos * (Props.Radius - Props.Thickness - (8*(numLen))));
+		  Y = Props.y + (_sin * (Props.Radius - Props.Thickness - 5));
 		}
 		  _Disp->printNumI(rotate, X, Y, numLen);
 	  }
@@ -948,22 +1018,16 @@ class Gauge
 		_Disp->drawHLine(XL, Dy, (XR - XL));
 	  }
 	}
+	
+	Properties getButtonProperties()
+	{
+	  return Props;
+	}
+	
 	private:
-		int cx; 
-		int cy; 
-		int radius;
-		int thick;
-		int start;
-		int stop;
-		bool dir;
-		word cfg, cbg, TC;
-		int Tstart;
-		int Tstop;
-		int Tinc;
-		bool Where;
+		word cfg, cbg;
         int numSize(unsigned long x) {byte count = 0; while(x != 0){ x*=0.1; count++;} return count;}
 		int numLen;
-		int Xoff, Yoff, TS, TXoff, TYoff;
 		char * Htext, *Ftext;
 		byte HTsize, FTsize;
 		int lastPos, GPosition;

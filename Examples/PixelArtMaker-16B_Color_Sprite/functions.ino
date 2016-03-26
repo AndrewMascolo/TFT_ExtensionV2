@@ -18,8 +18,8 @@ void drawGrid(struct Canvas canvas, byte cols, byte rows)
   myGLCD.setColor(canvas.BC);
   myGLCD.fillRect(canvas.x, canvas.y, canvas.x + canvas.w, canvas.y + canvas.h);
 
-  int Xspace = (canvas.w / rows);
-  int Yspace = (canvas.h / cols);
+  int Xspace = (canvas.w / cols);
+  int Yspace = (canvas.h / rows);
 
   myGLCD.setColor(canvas.FC);
   for ( int box = 0; box < (rows * cols); box++)
@@ -31,15 +31,15 @@ void drawGrid(struct Canvas canvas, byte cols, byte rows)
       (box % cols)*Xspace + Xspace + canvas.x,
       (box / cols)*Yspace + Yspace + canvas.y
     );
-    Pixels[(box % rows)] = 0;
+    //Pixels[(box % rows)] = 0;
   }
 }
 
 void drawPixels(struct Canvas canvas, byte cols, byte rows, byte tog, int color)
 {
   static int box = 0;
-  static int Xspace = (canvas.w / rows);
-  static int Yspace = (canvas.h / cols);
+  static int Xspace = (canvas.w / cols);
+  static int Yspace = (canvas.h / rows);
 
   Pixel.Coords
   (

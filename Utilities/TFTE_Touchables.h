@@ -1,5 +1,29 @@
 #ifndef TFTE_Touchables_h
 #define TFTE_Touchables_h
+
+/*
+The MIT License (MIT)
+
+Copyright (c) 2016 Andrew Mascolo Jr
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 	
 class Box : public Base
 {
@@ -1221,7 +1245,7 @@ class Slider : public Base
       SetRange();
       SetValue(-1);
       SetDirection(LTR);
-      Padding(2, WHITE);
+      Padding(2, WHITE, NoBars);
       T = -1;
     }
 	
@@ -1291,21 +1315,28 @@ class Slider : public Base
         else
           (Props.Round ? _Disp->drawRoundRect(Props.x, Props.y, Props.x2, Props.y2) : _Disp->drawRect(Props.x, Props.y, Props.x2, Props.y2));
       }
+	  Update();
 	  Restore_MainColor;
     }
 
-    int Touch()
+	int Touch()
+	{
+	  int tmpTS = -1;
+	  if ((tmpTS = getTouchState()) != -1)
+        T = tmpTS;
+	
+	  Update();
+	}
+	
+    int Update()
     {
 	  Save_MainColor;
       int Out = -1;
-      int tmpTS = -1, tmpGV = -1;
-
-      if ((tmpTS = getTouchState()) != -1)
-        T = tmpTS;
+      int tmpGV = -1;
 
       if ((tmpGV = GetValue()) != -1)
         T = tmpGV;
-
+   
       if (T != -1)
       {
         if (orient == HORIZONTAL)
@@ -1359,7 +1390,7 @@ class Slider : public Base
           }
         }
         if (T > -1)
-          Out = Map(T, (orient ? Props.y : Props.x), (orient ? Props.y2 : Props.x2), H, L - 1);
+          Out = TFTE_Map(T, (orient ? Props.y : Props.x), (orient ? Props.y2 : Props.x2), H, L - 1);
       }
 	  Restore_MainColor;
       return Out;
@@ -1373,16 +1404,16 @@ class Slider : public Base
       {
         if (SV > H) SV = H;
         if (SV < L) SV = L;
-        T = Map(SV, L, H, (orient ? Props.y2 : Props.x2), (orient ? Props.y : Props.x));
+        T = TFTE_Map(SV, L, H, (orient ? Props.y2 : Props.x2), (orient ? Props.y : Props.x));
       }
 
     }
 
-    void Padding(byte padding = 0, word padColor = WHITE, bool barsoff = 0)
+    void Padding(byte padding = 0, word padColor = WHITE, bool bars = 0)
     {
       Props.PaddingSize = padding;
       Props.PadColor = padColor;
-      BarsOff = barsoff;
+      BarsOff = !bars;
     }
 
     void SetRange(long l = 0, long h = 10, byte inc = 1)
@@ -1404,7 +1435,7 @@ class Slider : public Base
         if (Props.Direction == RTL || Props.Direction == BTT)
           Swap(SL, SH);
 
-        Value = Map(Val, L, H, SL, SH);
+        Value = TFTE_Map(Val, L, H, SL, SH);
       }
     }
 
@@ -1495,12 +1526,18 @@ class Swipe : public Base
 	  Ylimit = Y;
 	} 
 
-    void ShowSwipeArea(bool En, word color = RED, byte type = SQUARED)
+    void ShowSwipeArea(bool En = false, word color = RED, byte type = SQUARED, bool filled = NOFILL)
     {
-	  Save_MainColor;
-      _Disp->setColor(color);
-      (type? _Disp->drawRoundRect(Props.x, Props.y, Props.x2, Props.y2) : _Disp->drawRect(Props.x, Props.y, Props.x2, Props.y2));
-	  Restore_MainColor;
+	  if(En)
+	  {
+		Save_MainColor;
+		_Disp->setColor(color);
+		if(filled)
+			(type? _Disp->fillRoundRect(Props.x, Props.y, Props.x2, Props.y2) : _Disp->fillRect(Props.x, Props.y, Props.x2, Props.y2));
+		else
+			(type? _Disp->drawRoundRect(Props.x, Props.y, Props.x2, Props.y2) : _Disp->drawRect(Props.x, Props.y, Props.x2, Props.y2));
+		Restore_MainColor;
+	  }
     }
 
     bool getTouchState()

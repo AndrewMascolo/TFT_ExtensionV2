@@ -13,8 +13,8 @@
 //================SKETCH SETTINGS FOR 16BIT COLOR SPRITE====================
 #define TYPE COLOR
 #define SIZE INTS
-#define ROWS 64
-#define COLS 64
+#define IMG_HEIGHT 120
+#define IMG_WIDTH 200
 //=========================================================================
 
 template<class T> inline Print &operator <<(Print &str, T arg)
@@ -53,11 +53,11 @@ struct Canvas
 };
 
 Canvas Grid, imgCanvas;
-#define NUM (COLS/4)+1
+#define NUM (IMG_WIDTH/4)+1
 
-short Pixels[ ROWS * COLS ] = {0};
+short Pixels[ IMG_HEIGHT * IMG_WIDTH ] = {0};
 
-short ColorPalletDefinedColors[ROWS] =
+short ColorPalletDefinedColors[IMG_HEIGHT] =
 {
   BLACK, RED, ORANGE, YELLOW, GREEN, BLUE, PURPLE, REG_PINK,
   CYAN, GREY, DARK_RED, DARK_ORANGE, DARK_YELLOW, DARK_GREEN, DARK_BLUE, WHITE
@@ -83,7 +83,7 @@ void MakePixelFile(T(&pixels)[N], char *fileName, char *imgName)
 
     myFile.print(imgName);
     myFile.print(" [");
-    myFile.print((ROWS * COLS) * 2);
+    myFile.print((IMG_HEIGHT * IMG_WIDTH) * 2);
     myFile.println("] PROGMEM = {");
 
     // this writes the pixel data to the SD card
@@ -118,9 +118,9 @@ void setup()
   delay(2000);
   myGLCD.fillScr(0);
 
-  Grid.setCoords(10, 10, COLS * (myGLCD.getDisplayYSize()/COLS), ROWS * (myGLCD.getDisplayYSize()/ROWS), BLUE, BLACK);
-  imgCanvas.setCoords(550, 300, COLS * (160/COLS), ROWS * (160/COLS), BLUE, BLACK); // 16*11 -> best results should be a divisor of both the images width and height
-  drawGrid(Grid, COLS, ROWS);
+  Grid.setCoords(10, 10, IMG_WIDTH *2/* (myGLCD.getDisplayXSize()/IMG_WIDTH)*/, IMG_HEIGHT *2/* (myGLCD.getDisplayYSize()/IMG_HEIGHT)*/, BLUE, BLACK);
+  imgCanvas.setCoords(550, 300, IMG_WIDTH /* (160/IMG_WIDTH)*/, IMG_HEIGHT /* (160/IMG_WIDTH)*/, BLUE, BLACK); // 16*11 -> best results should be a divisor of both the images width and height
+  drawGrid(Grid, IMG_WIDTH, IMG_HEIGHT);
 
   Bit.Coords(550, 60, 660, 100);
   Bit.Colors(GREEN, RED, ROUNDED, FILL);
@@ -186,7 +186,7 @@ void loop()
 
     if (clean.Delay(500))
     {
-      drawGrid(Grid, COLS, ROWS);
+      drawGrid(Grid, IMG_WIDTH, IMG_HEIGHT);
       memset(Pixels, '\0', sizeof(Pixels));
     }
     i++;
@@ -203,7 +203,7 @@ void loop()
     if (loadImg.DoubleClick())
     {
       //clean the canvas
-      drawGrid(Grid, COLS, ROWS);
+      drawGrid(Grid, IMG_WIDTH, IMG_HEIGHT);
       memset(Pixels, '\0', sizeof(Pixels));
 
       char fname[30] = {NULL};
@@ -213,7 +213,7 @@ void loop()
     }
 
     if (editImg.DoubleClick())
-      drawLoadedImg(Grid, Pixels, COLS, ROWS, true);
+      drawLoadedImg(Grid, Pixels, IMG_WIDTH, IMG_HEIGHT, true & 0);
 
     if (FileButton.Touch())
     {
@@ -222,7 +222,7 @@ void loop()
       for (byte i = 0; i < 16; i++)
         ColorPallet[i]->ReDraw();
 
-      drawGrid(Grid, COLS, ROWS);
+      drawGrid(Grid, IMG_WIDTH, IMG_HEIGHT);
       Bit.ReDraw();
       clean.ReDraw();
       saveImg.ReDraw();
@@ -232,7 +232,7 @@ void loop()
     }
   }
 
-  drawPixels(Grid, COLS, ROWS, Bit.Toggle(), Color);
+  drawPixels(Grid, IMG_WIDTH, IMG_HEIGHT, Bit.Toggle(), Color);
 }
 
 void LoadImageFromSD(struct Canvas canvas, char * filename)
@@ -252,7 +252,7 @@ void LoadImageFromSD(struct Canvas canvas, char * filename)
       {
         Pixels[i] = Filter(myImg);
         //Serial << i << F(" : ") << Pixels[i] << "\n";
-        if ((i + 1) >= (ROWS * COLS)) break;
+        if ((i + 1) >= (IMG_HEIGHT * IMG_WIDTH)) break;
         i++;
       }
 
@@ -264,7 +264,7 @@ void LoadImageFromSD(struct Canvas canvas, char * filename)
       Serial.println("error opening file");
     }
 
-    drawLoadedImg(imgCanvas, Pixels, COLS, ROWS, false); // false = no grid
+    drawLoadedImg(imgCanvas, Pixels, IMG_WIDTH, IMG_HEIGHT, false); // false = no grid
   }
 }
 
