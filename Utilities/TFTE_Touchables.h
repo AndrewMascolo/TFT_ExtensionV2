@@ -381,9 +381,6 @@ class Box : public Base
 	}
 	
   private:
-    //byte Props.PaddingSize, Props.FontSize, Props.HFFontSize;
-    //word Props.C1, Props.C2, Props.PadColor, Props.tColor, Props.HFcolor;
-    //bool Props.Props.Round, Props.Fill;
     bool Lock;
     bool locked;
 	byte lastTouch, gotfirst, released;
@@ -717,7 +714,7 @@ class Circle : public Base
 	
     void getText(char* text)
 	{
-	  text = (getState()? pText : npText);
+	  strcpy(text, (getState()? pText : npText));
 	}
 	
 	Properties getButtonProperties()
@@ -758,7 +755,7 @@ class Triangle : public Base
     {
       _Disp = _base->getDisplay();
       _Touch = _base->getTouch();
-      lastState = 0;
+      lastState = false;
       SetState(true);
       Lock = 0;
       locked = false;
@@ -852,7 +849,7 @@ class Triangle : public Base
     {
 	  Save_MainColor;
       int Cx, Cx1, Cx2, Cy, Cy1, Cy2;
-	  //delay(1);
+	
       if (State != lastState)
       {
         this->getCoords(&Cx, &Cy, &Cx1, &Cy1, &Cx2, &Cy2);
@@ -1128,7 +1125,8 @@ class Triangle : public Base
     int X3, Y3;
     word C1, C2, PadColor, tColor, HFcolor;
     bool Fill;
-    bool Lock, State, lastState, locked;
+	byte State, lastState;
+    bool Lock, locked;
     bool OPT;
     char *pText, *npText, *hText, *fText;
     byte PaddingSize, FontSize, HFFontSize;
@@ -1148,7 +1146,7 @@ class Triangle : public Base
       long A2 = Area(Cx, Cy, tx, ty, Cx2, Cy2);  // The reason three are needed is because each one is a section of the triangle.
       long A3 = Area(Cx, Cy, Cx1, Cy1, tx, ty);
 
-      return (A >= (A1 + A2 + A3));
+      return State = (A >= (A1 + A2 + A3));
     }
 
     void convert_xyDegtoABC(int x, int y, int base, int Deg)
@@ -1177,17 +1175,23 @@ class Triangle : public Base
 
 class Radio
 {	
+  private:
+	byte Output;
+	bool lastState;
+	bool state;
+
   public:
-    Radio() {}
+    Radio() 
+	{
+	  Output = 0; 
+	  lastState = 1;
+      state = 0;
+	}
     ~Radio() {}
 	
     template<class T, size_t N>
     byte RadioButtons(T(&_buttons)[N])
     {
-      static byte Output = 0;
-      static bool lastState = 1, lastOutput = -1;
-      bool state = 0;
-
       for (byte i = 0; i < N; i++)
       {
         state = _buttons[i]->Touch(false);
@@ -1272,7 +1276,7 @@ class Slider : public Base
       Props.Direction = Dir;
     }
 
-    int getTouchState()
+    bool getTouchState()
     {
       _Touch->read();
       int touchX = _Touch->getX();
@@ -1281,9 +1285,13 @@ class Slider : public Base
       int yc = (touchY > _Disp->getDisplayYSize() ? 0 : touchY);
 
       if ((xc >= Props.x) && (xc <= Props.x2) && (yc >= Props.y) && (yc <= Props.y2))
-        return orient ? yc : xc;
-      else
-        return -1;
+	  {
+	    S_xc = xc;
+		S_yc = yc;
+	    return true;
+	  }
+	  else
+	    return false;
     }
 
     void Draw()
@@ -1322,8 +1330,11 @@ class Slider : public Base
 	int Touch()
 	{
 	  int tmpTS = -1;
-	  if ((tmpTS = getTouchState()) != -1)
-        T = tmpTS;
+	  if (getTouchState())
+	  {
+        T = (orient ? S_yc : S_xc);
+	  }
+	  else T = tmpTS;
 	
 	  Update();
 	}
@@ -1479,7 +1490,7 @@ class Slider : public Base
     long L, H;//8
     byte Inc;//1
     long Value;//2
-    int T;
+    int T, S_xc, S_yc;
 };
 
 class Swipe : public Base
@@ -1871,12 +1882,12 @@ class CustomButton : public Base
 	  return this->State;
 	}
 	
-	int getButtonPressedColor()
+	uint16_t getButtonPressedColor()
 	{
 	  return C1;
 	}
 	
-	int getButtonReleasedColor()
+	uint16_t getButtonReleasedColor()
 	{
 	  return C2;
 	}

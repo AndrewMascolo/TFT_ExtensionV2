@@ -59,6 +59,10 @@ void printDirectory(File dir, char * buf)
       if (!entry.isDirectory())
       {
         char* Name = entry.name();
+        for(byte i = 0, j = strlen(Name); i < j; i++)
+        {
+          Name[i] = tolower(Name[i]);  
+        }
         Serial.println(Name);
         strncpy(myFiles[i], Name, strlen(Name));
         ListSelect.Text(myFiles[i], Big, WHITE);
@@ -129,13 +133,13 @@ void printDirectory(File dir, char * buf)
         myTouch.setPrecision(PREC_MEDIUM);
         CancelButton.ReDraw();
 
-        char tmp[30] = {'\c'};
+        char tmp[30] = {'\0'};
         while (1)
         {
           if (myKB.Mobile_KeyBoard(tmp, BLUE))
           {
             strncpy(message, tmp, 7);
-            strcat(message, ".C");
+            strcat(message, ".c");
             return;
           }
 

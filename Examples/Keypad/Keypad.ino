@@ -13,10 +13,12 @@ Base B(&myGLCD, &myTouch); // Base class, NEEDED!!!
 Circle *keypadButtons[12];
 
 char *KPtext[12] = {
-  "1", "2", "3", "4", "5", "6", "7", "8", "9"};
-  
+  "1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"
+};
+
 void setup()
 {
+  Serial.begin(115200);
   myGLCD.InitLCD(LANDSCAPE);
   myGLCD.clrScr();
   myGLCD.setFont(SmallFont);
@@ -26,16 +28,12 @@ void setup()
   for (byte i = 0; i < 12; i++)
     keypadButtons[i] = new Circle(&B);
 
-  KPtext[9] = "*";
-  KPtext[10] = "0";
-  KPtext[11] = "#";
-
   for (byte i = 0; i < 12; i++)
   {
-    keypadButtons[i]->Coords(70 + (80 * (i % 3)), 30 + (55*(i/3)), 26);
+    keypadButtons[i]->Coords(70 + (80 * (i % 3)), 30 + (55 * (i / 3)), 26);
     keypadButtons[i]->Colors(GREEN, BLUE, FILL);
     keypadButtons[i]->Padding(2);
-    keypadButtons[i]->Text(KPtext[i],WHITE, Big);
+    keypadButtons[i]->Text(KPtext[i], WHITE, Big);
     keypadButtons[i]->Draw();
   }
 }
@@ -45,9 +43,14 @@ void loop()
   static byte index = 0;
 
   index++;
-  if(index > 11)
+  if (index > 11)
     index = 0;
 
-  keypadButtons[index]->Touch(); 
+  if (keypadButtons[index]->Touch())
+  {
+    char buff[2];
+    keypadButtons[index]->getText(buff);
+    Serial.println(buff);
+  }
 }
 

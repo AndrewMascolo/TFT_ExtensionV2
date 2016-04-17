@@ -1,0 +1,36 @@
+#define DTR(x) (x*0.01745 + 3.14159)
+
+void RoundRect(int X, int Y, int W, int H, int R)
+{
+  myGLCD.drawHLine(X + R - 1, Y, W - (R * 2) + 1);
+  myGLCD.drawHLine(X + R - 1, Y + H, W - (R * 2) + 1);
+  myGLCD.drawVLine(X, Y + R, H - R * 2);
+  myGLCD.drawVLine(X + W, Y + R, H - R * 2);
+
+  for (float Ang = 0; Ang < 90; Ang++)
+  {
+    int Cx = (X + R) + cos(DTR(Ang)) * R;
+    int Cy = (Y + R) + sin(DTR(Ang)) * R;
+
+    myGLCD.drawPixel(Cx, Cy); //good
+    myGLCD.drawPixel(-Cx + (X * 2) + W, Cy); // good
+    myGLCD.drawPixel(Cx, -Cy + (Y * 2) + H); //good
+    myGLCD.drawPixel(-Cx + (X * 2) + W, -Cy + (Y * 2) + H); //good
+  }
+}
+
+void FillRoundRect(int X, int Y, int W, int H, int R)
+{
+  for (int Ang = 0; Ang < 90; Ang++)
+  {
+    int Cx = (X + R) + cos(DTR(Ang)) * R;
+    int Cy = (Y + R) + sin(DTR(Ang)) * R;
+    int Cx2 = -Cx + X * 2;
+    int Cy2 = -Cy + Y * 2;
+
+    myGLCD.drawLine(Cx, Cy, Cx2 + W, Cy);
+    myGLCD.drawLine(Cx, Cy2 + H, Cx2 + W, Cy2 + H);
+
+    myGLCD.fillRect(X, Y + R, X + W, (Y + R) + H - (R * 2));
+  }
+}

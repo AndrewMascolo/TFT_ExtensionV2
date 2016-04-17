@@ -25,6 +25,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+//Version 2.13
+// Fixed some minor bugs that were missed from the last version
+// Radio Class was fixed to handle multiple types ie. Box, Circle and Triangle can now be used together in the same Radio button instance. 
+// Radio Class bug was fixed, issue with multiple instances of radio buttons
+// Fixed a few functions and sped them up 
+
 //Version 2.12
 // Adafruit extension now allows for buttons to be used for any orientation
 // Until Henning Karlsen allows for reversed landscape and portrait orientations, I will hold off on adding that functionality to the UTFT extension.
@@ -235,6 +241,22 @@ class Base
 {
   public:
     Base() {} // Needed for the other class to work properly
+	virtual void Draw(bool TE = true){}
+	virtual void ReDraw(bool TE = true){}
+	virtual void SetState(bool S){}
+	virtual bool Touch(bool draw = true){}
+	virtual bool getTouchState(){}
+	virtual bool Toggle(){}
+	virtual bool Delay(unsigned long T = 1000){}
+	virtual bool DoubleClick(unsigned long timeout = 500000UL){}
+	virtual byte getState() {}
+	virtual void Unlock(){}
+	virtual uint16_t getButtonPressedColor(){}
+	virtual uint16_t getButtonReleasedColor(){}
+	virtual uint16_t getButtonTextColor(){}
+	virtual uint16_t getButtonPaddingColor(){}
+	virtual uint16_t getButtonHeadFootColor(){}
+	virtual void getText(char* text){}
 
 #if (defined UTFT_h || defined _ADAFRUIT_ILI9341H_) && defined UTouch_h
     Base(TFT_Display *Disp, TOUCH *Touch): _Disp(Disp), _Touch(Touch) {}

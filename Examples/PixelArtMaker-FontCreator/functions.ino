@@ -144,6 +144,8 @@ short HexChar2Dec(char Ch)
 */
 int Filter(File myImg)
 {
+  int idx = 0;
+
   char currentChar = myImg.read();
   if (IsWithin(currentChar, '0', '9'))
   {
@@ -170,18 +172,36 @@ int Filter(File myImg)
   else if ((currentChar == '/') && (myImg.read() == '/')) // comment
   {
     char C = 0;
+    char commbuf[25] = {0};
+    idx = 0;
     while (1)
     {
       C = myImg.read();
-      //Serial << char(C);
+      //Serial.print(C);
       if (( C == 10) || (C == 13))
       {
+        commbuf[idx] = '\0';
+        strcpy(Comments[Comm], commbuf);
+        Serial.println(Comm);
+        memcpy(commbuf, 0, 25);
+        Comm++;
+
+        if (Comm > numOfLetters)
+          Comm = 0;
+        idx = 0;
         //Serial.println();
         break;
       }
+      else
+      {
+        commbuf[idx] = C;
+        idx++;
+      }
     }
-    //Serial.println("End of Comment");
+    //Serial.println(Comments[Comm-1]);
     Filter(myImg);
   }
+  //else if (( currentChar == 10) || (currentChar == 13))
+  //Comm++;
   else  Filter(myImg);
 }

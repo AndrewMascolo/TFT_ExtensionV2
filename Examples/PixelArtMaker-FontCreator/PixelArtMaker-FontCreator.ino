@@ -11,10 +11,13 @@
 #define BYTES 1
 #define INTS  2
 
-//================SKETCH SETTINGS FOR 8BIT COLOR SPRITE====================
-#define numOfLetters 95
-#define ROWS 12
-#define COLS 8 // this value decides the size as either 8 bits or 16 bits and up
+//================SKETCH SETTINGS FOR FONT/SPRITE FILE====================
+#define ROWS 16
+#define COLS 16 // this value decides the size as either 8 bits or 16 bits and up
+#define CHAROFFSET ' ' 
+#define numOfLetters 28
+
+//===================DON'T MODIFY THESE====================================
 #define SIZE (COLS/8)
 #define TYPE (COLS/8)
 //=========================================================================
@@ -30,6 +33,7 @@ template<class T> inline Print &operator <<(Print &str, T arg)
 File myFile;
 
 extern uint8_t BigFont[];
+extern uint8_t SmallFont[];
 
 UTFT    myGLCD(CTE70, 25, 26, 27, 28);
 //UTFT    myGLCD(CTE70, 38, 39, 40, 41);
@@ -45,6 +49,7 @@ Box OkButton(&B), CancelButton(&B), ListSelect(&B), BackButton(&B), NewButton(&B
 
 MobileKeyboard myKB(&B);
 char message[30];
+byte Comm = 0;
 
 struct Canvas
 {
@@ -60,6 +65,7 @@ Canvas Grid, imgCanvas;
 
 short Pixels[ ROWS ] = {0};
 short MasterCopy[ ROWS * numOfLetters ] = {0};
+char Comments[numOfLetters][25] = {0};
 
 template<typename T, size_t N>
 void MakePixelFile(T(&MCpixels)[N], char *fileName, char *imgName)
@@ -76,35 +82,44 @@ void MakePixelFile(T(&MCpixels)[N], char *fileName, char *imgName)
     Serial.print(F("Writing to file ")); Serial.println(fileName);
 
     short i = 0;
-    char buf[24 / SIZE];
+    char buf[(24 / SIZE) + 1];
+    myFile.print("#include <avr/pgmspace.h> \n#if defined(__AVR__)\n\n#elif defined(__PIC32MX__)\n\t#define PROGMEM \n#elif defined(__arm__)\n\t#define PROGMEM \n#endif \n\n");
     myFile.print("const uint8_t ");
 
     myFile.print(imgName);
     myFile.print(" [");
-    myFile.print(((ROWS /** (COLS / 8)*/) * numOfLetters) + 4);
+    myFile.print(((ROWS * SIZE) * numOfLetters) + 4);
     myFile.println("] PROGMEM = {");
 
     char headerBuf[30] = {'\0'};
-    sprintf(headerBuf, "0x%02X, 0x%02X, 0x%02X, 0x%02X, ", ROWS, COLS, ' ', (ROWS /** (COLS / 8)*/) * numOfLetters );
+    sprintf(headerBuf, "0x%02X, 0x%02X, 0x%02X, 0x%02X, ", ROWS, COLS, 0, numOfLetters );
 
     myFile.println(headerBuf);
 
+    Comm = 0;
     // this writes the pixel data to the SD card
     while (i < N)
     {
-      if ((COLS / 8) == 4) // break up into bytes
-        sprintf(buf, "0x%02X, 0x%02X, 0x%02X, 0x%02X,", byte(MasterCopy[i] >> 32), byte(MasterCopy[++i] >> 16), byte(MasterCopy[++i] >> 8), byte(MasterCopy[++i] & 0x00ff) );
+      if ((COLS / 8) == 4) // break up into bytes **I doubt it will ever get here
+        sprintf(buf, "0x%02X, 0x%02X, 0x%02X, 0x%02X,", byte(MasterCopy[i] >> 32), byte(MasterCopy[i] >> 16), byte(MasterCopy[i] >> 8), byte(MasterCopy[i] & 0x00ff) );
       else if ((COLS / 8) == 2) // break up into bytes
-        sprintf(buf, "0x%02X, 0x%02X, ", byte(MasterCopy[i] >> 8), byte(MasterCopy[++i] & 0x00ff) );
+      {
+        sprintf(buf, "0x%02X, 0x%02X, ", byte(MasterCopy[i] >> 8), byte(MasterCopy[i] & 0x00ff) );
+        Serial.println(i);
+      }
       else // save as shorts
         sprintf(buf, "0x%02X, ", short(MasterCopy[i]) & 0x00FF );
 
       myFile.print(buf);
-     
       memset(buf, 0, 14 / SIZE); // clear the buffer contents
-      i++;
+      ++i;
       if ((i > 0) && ((i % ROWS) == 0))
+      {
+        myFile.print("//");
+        myFile.print(Comments[Comm + 1]);
+        Comm++;
         myFile.println();
+      }
     }
 
     //once the pixel data is written, add the closing bracket and colon
@@ -205,7 +220,7 @@ void loop()
       SaveToMaster(CharIndex);
       char fname[30] = {NULL};
       FileButton.getText(fname);
-      MakePixelFile(MasterCopy, fname, "Font");
+      MakePixelFile(MasterCopy, fname, "SpriteSheet");
       SidePanel.SetState(true);
       RefreshTimer = millis();
       _Refresh = true;
@@ -213,8 +228,6 @@ void loop()
 
     if (loadImg.DoubleClick())
     {
-      //clean the canvas
-      Serial.println("In here");
       drawGrid(Grid, COLS, ROWS, CharIndex);
       memset(Pixels, '\0', sizeof(Pixels));
 
@@ -228,6 +241,10 @@ void loop()
     if (FileButton.Touch())
     {
       SetupButtonsOtherButtons(message);
+      for (byte i = 0, j = strlen(message); i < j; i++)
+      {
+        message[i] = tolower(message[i]);
+      }
       FileButton.Text(message, WHITE, Big);
 
       drawGrid(Grid, COLS, ROWS, CharIndex);
@@ -263,6 +280,12 @@ void loop()
         char fname[30] = {NULL};
         FileButton.getText(fname);
         LoadFromMaster(CharIndex);
+        myGLCD.setColor(BLACK);
+        myGLCD.fillRect(imgCanvas.x, imgCanvas.y - 20, imgCanvas.x + 25 * 8, imgCanvas.y - 2);
+        myGLCD.setColor(WHITE);
+        myGLCD.setFont(SmallFont); // small font for the comments
+        myGLCD.print(Comments[CharIndex + 1], imgCanvas.x, imgCanvas.y - 20);
+        myGLCD.setFont(BigFont); // change font back to big for everything else
       }
       pc_last = pcn;
       editImg.ReDraw();
@@ -288,11 +311,18 @@ void loop()
         char fname[30] = {NULL};
         FileButton.getText(fname);
         LoadFromMaster(CharIndex);
+        myGLCD.setColor(BLACK);
+        myGLCD.fillRect(imgCanvas.x, imgCanvas.y - 20, imgCanvas.x + 25 * 8, imgCanvas.y - 2);
+        myGLCD.setColor(WHITE);
+        myGLCD.setFont(SmallFont); // small font for the comments
+
+        myGLCD.print(Comments[CharIndex + 1], imgCanvas.x, imgCanvas.y - 20);
+        myGLCD.setFont(BigFont);
       }
       nc_last = ncn;
       editImg.ReDraw();
     }
-    
+
     myGLCD.setColor(WHITE);
     char *idxText = "00";
     idxText[0] = CharIndex % 10;
@@ -334,7 +364,7 @@ void LoadImageFromSD(char * filename)
         Size = Filter(myImg);
       }
       Serial << imgRows << " " << imgCols << " " << startChar << " " << Size << "\n";
-      
+
       // read from the file until there's nothing else in it:
       unsigned short _start = 0, j = ROWS, _end, cycle;
       _start = (index >= 0 ? index * j : 0);
@@ -351,7 +381,9 @@ void LoadImageFromSD(char * filename)
 #endif
         cycle--;
       }
-      
+
+      Comm = 0; // for the comments
+
       while (true)
       {
 #if SIZE == BYTES
