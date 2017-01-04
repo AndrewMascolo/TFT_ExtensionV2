@@ -118,6 +118,8 @@ byte * Font;
 
 #ifdef UTouch_h
 #define TOUCH UTouch
+#elif URTouch_h
+#define TOUCH URTouch
 #else
 #define TOUCH ITDB02_Touch
 #endif
